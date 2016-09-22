@@ -40,9 +40,7 @@ describe('fseh', function() {
         start: {}
       });
       should.not.exist(m.state);
-
       m.enter('start');
-
       should.exist(m.state);
       m.state.should.be.a('string');
       m.state.should.equal('start');
@@ -56,6 +54,16 @@ describe('fseh', function() {
       should.Throw(function() {
         m.enter('blabla');
       });
+    });
+
+    it('should do nothing when transiting to the current state', function() {
+      var m = new Machine({
+        start: {}
+      }, 'start');
+      m.enter('start');
+      should.exist(m.state);
+      m.state.should.be.a('string');
+      m.state.should.equal('start');
     });
 
     it('should perform a valid transition', function() {
@@ -178,6 +186,40 @@ describe('fseh', function() {
       start_spy.should.have.been.called.once();
       work_spy.should.have.been.called.once();
       end_spy.should.have.been.called.once();
+    });
+
+    it('should preserve the original arguments when calling a state handler', function() {
+      var m = new Machine({
+        start: {
+          transitions: [ 'end' ]
+        },
+        end: {
+        }
+      }, 'start');
+
+      var spy = chai.spy();
+      var h = m.eventHandler({
+        '*': spy
+      });
+      h.should.be.a('function');
+      h('aaa', 1);
+      spy.should.have.been.called.with('aaa', 1);
+    });
+
+    it('should do nothing when handling an event for state not covered', function() {
+      var m = new Machine({
+        start: {
+          transitions: [ 'end' ]
+        },
+        end: {
+        }
+      }, 'start');
+
+      var spy = chai.spy();
+      var h = m.eventHandler({
+        end: spy
+      });
+      h(); // current state is start and it's not covered by the handler
     });
   });
 
