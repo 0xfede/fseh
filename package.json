@@ -1,0 +1,35 @@
+{
+  "name": "fseh",
+  "version": "1.0.0",
+  "description": "A minimal Finite State Event Handler for JavaScript",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "mocha test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0xfede/fseh.git"
+  },
+  "keywords": [
+    "fsm",
+    "finite",
+    "state",
+    "machine",
+    "event",
+    "handler",
+    "typescript",
+    "javascript"
+  ],
+  "author": "Federico Pinna <fpinna@vivocha.com> (http://www.vivocha.com/)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/0xfede/fseh/issues"
+  },
+  "homepage": "https://github.com/0xfede/fseh#readme",
+  "devDependencies": {
+    "chai": "3.5.0",
+    "chai-spies": "0.7.1",
+    "mocha": "3.0.2",
+    "typescript": "1.8.10"
+  }
+}
