@@ -1,2 +1,2 @@
 # fseh
-A minimal Finite State Event Handler for Javascript
+A minimal Finite State Event Handler for JavaScript
