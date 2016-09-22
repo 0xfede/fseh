@@ -56,7 +56,7 @@
       "path": "node_modules/cz-conventional-changelog"
     },
     "ghooks": {
-      "pre-commit": "npm run test:single && npm run check-coverage"
+      "pre-commit": "npm run build && npm run test:single && npm run check-coverage"
     }
   }
 }
