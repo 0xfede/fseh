@@ -38,7 +38,9 @@
     "semantic-release-cli": "1.4.1",
     "typescript": "1.8.10"
   },
-  "czConfig": {
-    "path": "node_modules/cz-conventional-changelog"
+  "config": {
+    "commitizen": {
+      "path": "node_modules/cz-conventional-changelog"
+    }
   }
 }
