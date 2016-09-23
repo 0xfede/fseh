@@ -49,4 +49,4 @@ class Machine {
   }
 }
 
-export { Machine };
+export { State, StateHandlers, Machine };
