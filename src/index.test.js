@@ -32,6 +32,15 @@ describe('fseh', function() {
       }, 'start');
       spy.should.have.been.called();
     });
+
+    it('should create a Machine with a state list and transit to the initial state', function() {
+      var m = new Machine([ 'start', 'work', 'end' ], 'start');
+      should.exist(m.state);
+      m.state.should.be.a('string');
+      m.state.should.equal('start');
+      should.exist(m.states);
+      m.states.should.deep.equal({ 'start': {}, 'work': {}, 'end': {} });
+    });
   });
 
   describe('enter', function() {

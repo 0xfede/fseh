@@ -1,22 +1,37 @@
-interface State {
+export interface State {
   onEntry?: ()=>void;
   onExit?: ()=>void;
   transitions?: string[];
 }
 
-interface StateHandlers {
+export type StateList = string[];
+export type StateTable = { [name:string]: State };
+
+export interface StateHandlers {
   ['*']?: (...args: any[])=>void
   [state:string]: (...args: any[])=>void
 }
 
-class Machine {
+export class Machine {
   state:string = undefined;
+  states:StateTable = undefined;
 
-  constructor(private states:{ [name:string]: State }, initialState?:string) {
+  constructor(states:StateList, initialState?:string);
+  constructor(states:StateTable, initialState?:string);
+  constructor(states:any, initialState?:string) {
+    if (Array.isArray(states)) {
+      this.states = {};
+      (states as StateList).forEach(s => {
+        this.states[s] = {};
+      });
+    } else {
+      this.states = states as StateTable;
+    }
     if (initialState) {
       this.enter(initialState);
     }
   }
+
   enter(state:string):void {
     if (this.state === state) return;
     var oldState = this.states[this.state];
@@ -48,5 +63,3 @@ class Machine {
     }
   }
 }
-
-export { State, StateHandlers, Machine };
