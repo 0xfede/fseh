@@ -92,8 +92,10 @@ describe('fseh', function() {
     });
 
     it('should not perform an invalid transition', function() {
+      var spy = chai.spy();
       var m = new Machine({
         start: {
+          onExit: spy,
           transitions: [ 'end' ]
         },
         end: {},
@@ -108,6 +110,7 @@ describe('fseh', function() {
       });
       m.state.should.be.a('string');
       m.state.should.equal('start');
+      spy.should.not.have.been.called();
     });
 
     it('should perform a valid transition calling exit and entry functions', function() {

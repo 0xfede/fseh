@@ -36,11 +36,11 @@ export class Machine {
     if (this.state === state) return;
     var oldState = this.states[this.state];
     if (oldState) {
-      if (typeof oldState.onExit === 'function') {
-        oldState.onExit.apply(this);
-      }
       if (oldState.transitions && oldState.transitions.indexOf(state) === -1) {
         throw new Error('invalid_transition');
+      }
+      if (typeof oldState.onExit === 'function') {
+        oldState.onExit.apply(this);
       }
     }
 
