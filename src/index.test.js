@@ -144,6 +144,95 @@ describe('fseh', function() {
     });
   });
 
+  describe('process', function() {
+    it('should process a known event in a state that handles it', function() {
+      var spy = chai.spy();
+      var m = new Machine({
+        state1: {
+          events: {
+            'event1': spy
+          },
+          transitions: [ 'state2' ]
+        },
+        state2: {
+        }
+      }, 'state1');
+
+      var h = m.eventHandler('event1');
+      h.should.be.a('function');
+      h();
+      spy.should.have.been.called.once();
+      m.enter('state2');
+      h();
+      spy.should.have.been.called.once();
+    });
+
+    it('should call the default handler if defined for an unknown event', function() {
+      var spy = chai.spy();
+      var m = new Machine({
+        state1: {
+          events: {
+            'event1': spy
+          },
+          transitions: [ 'state2' ]
+        },
+        state2: {
+          events: {
+            '*': spy
+          }
+        }
+      }, 'state1');
+
+      var h = m.eventHandler('event1');
+      h.should.be.a('function');
+      h();
+      spy.should.have.been.called.once();
+      m.enter('state2');
+      h();
+      spy.should.have.been.called.twice();
+    });
+
+    it('should ignore an event if not handled and no default is defined', function() {
+      var spy = chai.spy();
+      var m = new Machine({
+        state1: {
+          events: {
+            'event1': spy
+          },
+          transitions: [ 'state2' ]
+        },
+        state2: {
+          events: {}
+        }
+      }, 'state1');
+
+      var h = m.eventHandler('event1');
+      h.should.be.a('function');
+      h();
+      spy.should.have.been.called.once();
+      m.enter('state2');
+      h();
+      spy.should.have.been.called.once();
+    });
+
+    it('should ignore an null event', function() {
+      var spy = chai.spy();
+      var m = new Machine({
+        state1: {
+          events: {
+            'event1': spy
+          },
+          transitions: [ 'state2' ]
+        },
+        state2: {
+          events: {}
+        }
+      }, 'state1');
+
+      m.process();
+    });
+  });
+
   describe('eventHandler', function() {
     it('should create a default event handler', function() {
       var m = new Machine({

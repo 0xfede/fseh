@@ -1,15 +1,21 @@
+export interface Handlers {
+  ['*']?: (...args: any[])=>void
+  [name:string]: (...args: any[])=>void
+}
+
 export interface State {
   onEntry?: ()=>void;
   onExit?: ()=>void;
+  events?: Handlers;
   transitions?: string[];
 }
 
 export type StateList = string[];
 export type StateTable = { [name:string]: State };
 
-export interface StateHandlers {
-  ['*']?: (...args: any[])=>void
-  [state:string]: (...args: any[])=>void
+export class Event {
+  constructor(public name:string, public args:any[]) {
+  }
 }
 
 export class Machine {
@@ -29,6 +35,20 @@ export class Machine {
     }
     if (initialState) {
       this.enter(initialState);
+    }
+  }
+
+  private process(event:Event):void {
+    if (event) {
+      var { events: handlers } = this.states[this.state];
+
+      if (handlers) {
+        var handler = handlers[event.name] || handlers['*'];
+
+        if (handler) {
+          handler.apply(this, event.args);
+        }
+      }
     }
   }
 
@@ -53,12 +73,18 @@ export class Machine {
       newState.onEntry.apply(this);
     }
   }
-  eventHandler(stateHandlers: StateHandlers): (...args: any[])=>void {
+  eventHandler(name:string): (...args: any[])=>void;
+  eventHandler(stateHandlers:Handlers): (...args: any[])=>void;
+  eventHandler(nameOrStateHandlers:any): (...args: any[])=>void {
     return (...args: any[]) => {
-      if (stateHandlers[this.state]) {
-        stateHandlers[this.state].apply(this, args);
-      } else if (stateHandlers['*']) {
-        stateHandlers['*'].apply(this, args);
+      if (typeof(nameOrStateHandlers) === 'string') {
+        this.process(new Event(nameOrStateHandlers as string, args));
+      } else {
+        if (nameOrStateHandlers[this.state]) {
+          nameOrStateHandlers[this.state].apply(this, args);
+        } else if (nameOrStateHandlers['*']) {
+          nameOrStateHandlers['*'].apply(this, args);
+        }
       }
     }
   }
