@@ -46,7 +46,7 @@ export class Machine {
         var handler = handlers[event.name] || handlers['*'];
 
         if (handler) {
-          handler.apply(this, event.args);
+          return handler.apply(this, event.args);
         }
       }
     }
@@ -78,12 +78,12 @@ export class Machine {
   eventHandler(nameOrStateHandlers:any): (...args: any[])=>void {
     return (...args: any[]) => {
       if (typeof(nameOrStateHandlers) === 'string') {
-        this.process(new Event(nameOrStateHandlers as string, args));
+        return this.process(new Event(nameOrStateHandlers as string, args));
       } else {
         if (nameOrStateHandlers[this.state]) {
-          nameOrStateHandlers[this.state].apply(this, args);
+          return nameOrStateHandlers[this.state].apply(this, args);
         } else if (nameOrStateHandlers['*']) {
-          nameOrStateHandlers['*'].apply(this, args);
+          return nameOrStateHandlers['*'].apply(this, args);
         }
       }
     }

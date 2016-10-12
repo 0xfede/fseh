@@ -322,6 +322,30 @@ describe('fseh', function() {
       });
       h(); // current state is start and it's not covered by the handler
     });
+
+    it('should return the return value of the original event handler', function() {
+      var m = new Machine({
+        start: {
+          events: {
+            ev: function() {
+              return 4;
+            },
+            '*': function() {
+              return 3;
+            }
+          }
+        }
+      }, 'start');
+
+      var h = m.eventHandler({
+        start: function() {
+          return 5;
+        }
+      });
+      h().should.equal(5);
+      m.eventHandler('ev')().should.equal(4);
+      m.eventHandler('ev__')().should.equal(3);
+    });
   });
 
 });
