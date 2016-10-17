@@ -13,11 +13,6 @@ export interface State {
 export type StateList = string[];
 export type StateTable = { [name:string]: State };
 
-export class Event {
-  constructor(public name:string, public args:any[]) {
-  }
-}
-
 export class Machine {
   state:string = undefined;
   states:StateTable = undefined;
@@ -38,15 +33,15 @@ export class Machine {
     }
   }
 
-  private process(event:Event):void {
-    if (event) {
+  private process(name:string, ...args:any[]):void {
+    if (name) {
       var { events: handlers } = this.states[this.state];
 
       if (handlers) {
-        var handler = handlers[event.name] || handlers['*'];
+        var handler = handlers[name] || handlers['*'];
 
         if (handler) {
-          return handler.apply(this, event.args);
+          return handler.apply(this, args);
         }
       }
     }
@@ -78,7 +73,7 @@ export class Machine {
   eventHandler(nameOrStateHandlers:any): (...args: any[])=>void {
     return (...args: any[]) => {
       if (typeof(nameOrStateHandlers) === 'string') {
-        return this.process(new Event(nameOrStateHandlers as string, args));
+        return this.process(nameOrStateHandlers as string, ...args);
       } else {
         if (nameOrStateHandlers[this.state]) {
           return nameOrStateHandlers[this.state].apply(this, args);

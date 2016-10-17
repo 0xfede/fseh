@@ -343,7 +343,7 @@ describe('fseh', function() {
         }
       });
       h().should.equal(5);
-      m.eventHandler('ev')().should.equal(4);
+      m.eventHandler('ev')(1, 2, 3).should.equal(4);
       m.eventHandler('ev__')().should.equal(3);
     });
   });
