@@ -34,7 +34,7 @@ export class Machine {
     }
   }
 
-  private process(name:string, ...args:any[]):void {
+  protected process(name:string, ...args:any[]):void {
     if (name) {
       var { events: handlers } = this.states[this.state];
 
