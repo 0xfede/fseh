@@ -14,6 +14,7 @@ export type StateList = string[];
 export type StateTable = { [name:string]: State };
 
 export class Machine {
+  lastEvent:string = undefined;
   state:string = undefined;
   states:StateTable = undefined;
 
@@ -41,6 +42,7 @@ export class Machine {
         var handler = handlers[name] || handlers['*'];
 
         if (handler) {
+          this.lastEvent = name;
           return handler.apply(this, args);
         }
       }
