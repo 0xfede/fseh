@@ -41,6 +41,17 @@ describe('fseh', function() {
       should.exist(m.states);
       m.states.should.deep.equal({ 'start': {}, 'work': {}, 'end': {} });
     });
+
+    it('should create a Machine with two-step construction', function() {
+      var m = new Machine();
+      should.not.exist(m.state);
+      m.init([ 'start', 'work', 'end' ], 'start');
+      should.exist(m.state);
+      m.state.should.be.a('string');
+      m.state.should.equal('start');
+      should.exist(m.states);
+      m.states.should.deep.equal({ 'start': {}, 'work': {}, 'end': {} });
+    })
   });
 
   describe('enter', function() {

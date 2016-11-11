@@ -18,9 +18,17 @@ export class Machine {
   state:string = undefined;
   states:StateTable = undefined;
 
-  constructor(states:StateList, initialState?:string);
-  constructor(states:StateTable, initialState?:string);
-  constructor(states:any, initialState?:string) {
+  constructor(states?:StateList, initialState?:string);
+  constructor(states?:StateTable, initialState?:string);
+  constructor(states?:any, initialState?:string) {
+    if (states) {
+      this.init(states, initialState);
+    }
+  }
+
+  init(states:StateList, initialState?:string):this;
+  init(states:StateTable, initialState?:string):this;
+  init(states:any, initialState?:string):this {
     if (Array.isArray(states)) {
       this.states = {};
       (states as StateList).forEach(s => {
@@ -31,7 +39,10 @@ export class Machine {
     }
     if (initialState) {
       this.enter(initialState);
+    } else {
+      this.state = undefined;
     }
+    return this;
   }
 
   protected process(name:string, ...args:any[]):void {
