@@ -4,8 +4,8 @@ export interface Handlers {
 }
 
 export interface State {
-  onEntry?: ()=>void;
-  onExit?: ()=>void;
+  onEntry?: (...args: any[])=>void;
+  onExit?: (...args: any[])=>void;
   events?: Handlers;
   transitions?: string[];
 }
@@ -45,7 +45,7 @@ export class Machine {
     return this;
   }
 
-  protected process(name:string, ...args:any[]):void {
+  protected process(name:string, ...args:any[]):any {
     if (name) {
       var { events: handlers } = this.states[this.state];
 
@@ -60,7 +60,7 @@ export class Machine {
     }
   }
 
-  enter(state:string):void {
+  enter(state:string, ...args: any[]):void {
     if (this.state === state) return;
     var oldState = this.states[this.state];
     if (oldState) {
@@ -68,7 +68,7 @@ export class Machine {
         throw new Error('invalid_transition');
       }
       if (typeof oldState.onExit === 'function') {
-        oldState.onExit.apply(this);
+        oldState.onExit.apply(this, args);
       }
     }
 
@@ -78,7 +78,7 @@ export class Machine {
     }
     this.state = state;
     if (typeof newState.onEntry === 'function') {
-      newState.onEntry.apply(this);
+      newState.onEntry.apply(this, args);
     }
   }
   eventHandler(name:string): (...args: any[])=>void;

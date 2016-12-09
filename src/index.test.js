@@ -146,10 +146,10 @@ describe('fseh', function() {
       m.state.should.be.a('string');
       m.state.should.equal('start');
 
-      m.enter('end');
+      m.enter('end', 'aaa');
       start_entry.should.have.been.called.once();
       start_exit.should.have.been.called();
-      end_entry.should.have.been.called();
+      end_entry.should.have.been.called.with('aaa');
       m.state.should.be.a('string');
       m.state.should.equal('end');
     });
