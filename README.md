@@ -14,7 +14,7 @@ expected.
 ## How to Install
 
 ```bash
-npm install arrest
+npm install fseh
 ```
 
 ## Introductory example
