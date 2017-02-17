@@ -1,98 +1,101 @@
 export interface Handlers {
-  ['*']?: (...args: any[])=>void
-  [name:string]: (...args: any[])=>void
+  ['exit']?: (...args: any[]) => any
+  ['entry']?: (...args: any[]) => any
+  ['*']?: (...args: any[]) => any
+  [name:string]: (...args: any[]) => any
 }
 
-export interface State {
-  onEntry?: (...args: any[])=>void;
-  onExit?: (...args: any[])=>void;
-  events?: Handlers;
-  transitions?: string[];
-}
-
-export type StateList = string[];
-export type StateTable = { [name:string]: State };
+export type StateTable = { [name:string]: Handlers };
 
 export class Machine {
-  lastEvent:string = undefined;
   state:string = undefined;
-  states:StateTable = undefined;
+  ready:Promise<any> = Promise.resolve(true);
 
-  constructor(states?:StateList, initialState?:string);
-  constructor(states?:StateTable, initialState?:string);
-  constructor(states?:any, initialState?:string) {
-    if (states) {
-      this.init(states, initialState);
-    }
-  }
-
-  init(states:StateList, initialState?:string):this;
-  init(states:StateTable, initialState?:string):this;
-  init(states:any, initialState?:string):this {
-    if (Array.isArray(states)) {
-      this.states = {};
-      (states as StateList).forEach(s => {
-        this.states[s] = {};
-      });
-    } else {
-      this.states = states as StateTable;
-    }
+  constructor(public states?:StateTable, initialState?:string) {
     if (initialState) {
       this.enter(initialState);
-    } else {
-      this.state = undefined;
     }
-    return this;
   }
 
-  protected process(name:string, ...args:any[]):any {
-    if (name) {
-      var { events: handlers } = this.states[this.state];
-
-      if (handlers) {
-        var handler = handlers[name] || handlers['*'];
-
-        if (handler) {
-          this.lastEvent = name;
-          return handler.apply(this, args);
+  process(name:string, ...args:any[]):Promise<any> {
+    return this.ready.then(() => {
+      if (name) {
+        let handler = undefined;
+        if (this.states[this.state]) {
+          handler = this.states[this.state][name] || this.states[this.state]['*'];
         }
+        if (handler) {
+          return Promise.resolve(handler.apply(this, args));
+        } else {
+          return Promise.reject(new Error('unhandled'));
+        }
+      } else {
+        return Promise.reject(new Error('bad_event'));
       }
-    }
+    });
   }
 
-  enter(state:string, ...args: any[]):void {
-    if (this.state === state) return;
-    var oldState = this.states[this.state];
-    if (oldState) {
-      if (oldState.transitions && oldState.transitions.indexOf(state) === -1) {
-        throw new Error('invalid_transition');
-      }
-      if (typeof oldState.onExit === 'function') {
-        oldState.onExit.apply(this, args);
-      }
-    }
+  enter(state:string, ...args: any[]):Promise<any> {
+    let oldState = this.states[this.state];
+    let newState = this.states[state];
+    let ret = this.ready.then(() => {
+      if (this.state === state) {
+        return Promise.resolve(true);
+      } else if (!newState) {
+        return Promise.reject(new Error('unknown_state'));
+      } else {
+        let p = Promise.resolve(true);
+        if (oldState && oldState.exit) {
+          p = p.then(() => Promise.resolve(oldState.exit.apply(this, args)));
+        }
 
-    var newState = this.states[state];
-    if (!newState) {
-      throw new Error('unknown_state');
-    }
-    this.state = state;
-    if (typeof newState.onEntry === 'function') {
-      newState.onEntry.apply(this, args);
-    }
+        this.state = state;
+        if (newState.entry) {
+          p = p.then(() => Promise.resolve(newState.entry.apply(this, args)));
+        }
+        return p;
+      }
+    });
+    this.ready = ret.then(() => {}, () => {});
+    return ret;
   }
-  eventHandler(name:string): (...args: any[])=>void;
-  eventHandler(stateHandlers:Handlers): (...args: any[])=>void;
-  eventHandler(nameOrStateHandlers:any): (...args: any[])=>void {
+
+  eventHandler(name:string): (...args: any[]) => Promise<any>;
+  eventHandler(stateHandlers:Handlers): (...args: any[]) => Promise<any>;
+  eventHandler(nameOrStateHandlers:any): (...args: any[]) => Promise<any> {
     return (...args: any[]) => {
       if (typeof(nameOrStateHandlers) === 'string') {
         return this.process(nameOrStateHandlers as string, ...args);
       } else {
-        if (nameOrStateHandlers[this.state]) {
-          return nameOrStateHandlers[this.state].apply(this, args);
-        } else if (nameOrStateHandlers['*']) {
-          return nameOrStateHandlers['*'].apply(this, args);
-        }
+        let ret = this.ready.then(() => {
+          if (nameOrStateHandlers[this.state]) {
+            return Promise.resolve(nameOrStateHandlers[this.state].apply(this, args));
+          } else if (nameOrStateHandlers['*']) {
+            return Promise.resolve(nameOrStateHandlers['*'].apply(this, args));
+          } else {
+            return Promise.reject(new Error('unhandled'));
+          }
+        });
+        this.ready = ret.then(() => {}, () => {});
+        return ret;
+      }
+    }
+  }
+
+  callbackEventHandler(name:string): (...args: any[]) => void;
+  callbackEventHandler(stateHandlers:Handlers): (...args: any[]) => void;
+  callbackEventHandler(nameOrStateHandlers:any): (...args: any[]) => void {
+    let h = this.eventHandler(nameOrStateHandlers);
+    return (...args: any[]) => {
+      if (args.length && typeof args[args.length - 1] === 'function') {
+        let cb = args.pop();
+        h(args).then((...args:any[]) => {
+          cb(null, ...args);
+        }, err => {
+          cb(err);
+        });
+      } else {
+        h(args);
       }
     }
   }
