@@ -230,6 +230,6 @@ exception that might be throw.
 
 ### Machine.callbackEventHandler(name:string): (...args: any[]) => void
 
-Creates an event handler similar to the ones created by `Machine.eventHandler`, with the only exeption that is the last
+Creates an event handler similar to the ones created by `Machine.eventHandler`, with the only exception that if the last
 argument is a function, it treats it as a node-style callback `function(err, data)` and uses it to return the outcome
 of the promise received by the event handler.
