@@ -95,7 +95,7 @@ export class Machine {
           cb(err);
         });
       } else {
-        h(args);
+        h(...args);
       }
     }
   }
