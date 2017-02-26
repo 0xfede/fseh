@@ -13,51 +13,45 @@ export class Machine {
 
   constructor(public states?:StateTable, initialState?:string) {
     if (initialState) {
-      this.enter(initialState);
+      this.ready = this.enter(initialState);
     }
   }
 
   process(name:string, ...args:any[]):Promise<any> {
-    return this.ready.then(() => {
-      if (name) {
-        let handler = undefined;
-        if (this.states[this.state]) {
-          handler = this.states[this.state][name] || this.states[this.state]['*'];
-        }
-        if (handler) {
-          return Promise.resolve(handler.apply(this, args));
-        } else {
-          return Promise.reject(new Error('unhandled'));
-        }
-      } else {
-        return Promise.reject(new Error('bad_event'));
+    if (name) {
+      let handler = undefined;
+      if (this.states[this.state]) {
+        handler = this.states[this.state][name] || this.states[this.state]['*'];
       }
-    });
+      if (handler) {
+        return Promise.resolve(handler.apply(this, args));
+      } else {
+        return Promise.reject(new Error('unhandled'));
+      }
+    } else {
+      return Promise.reject(new Error('bad_event'));
+    }
   }
 
   enter(state:string, ...args: any[]):Promise<any> {
     let oldState = this.states[this.state];
     let newState = this.states[state];
-    let ret = this.ready.then(() => {
-      if (this.state === state) {
-        return Promise.resolve(true);
-      } else if (!newState) {
-        return Promise.reject(new Error('unknown_state'));
-      } else {
-        let p = Promise.resolve(true);
-        if (oldState && oldState.exit) {
-          p = p.then(() => Promise.resolve(oldState.exit.apply(this, args)));
-        }
-
-        this.state = state;
-        if (newState.entry) {
-          p = p.then(() => Promise.resolve(newState.entry.apply(this, args)));
-        }
-        return p;
+    if (this.state === state) {
+      return Promise.resolve(true);
+    } else if (!newState) {
+      return Promise.reject(new Error('unknown_state'));
+    } else {
+      let p = Promise.resolve(true);
+      if (oldState && oldState.exit) {
+        p = p.then(() => Promise.resolve(oldState.exit.apply(this, args)));
       }
-    });
-    this.ready = ret.then(() => {}, () => {});
-    return ret;
+
+      this.state = state;
+      if (newState.entry) {
+        p = p.then(() => Promise.resolve(newState.entry.apply(this, args)));
+      }
+      return p;
+    }
   }
 
   eventHandler(name:string): (...args: any[]) => Promise<any>;
@@ -67,17 +61,13 @@ export class Machine {
       if (typeof(nameOrStateHandlers) === 'string') {
         return this.process(nameOrStateHandlers as string, ...args);
       } else {
-        let ret = this.ready.then(() => {
-          if (nameOrStateHandlers[this.state]) {
-            return Promise.resolve(nameOrStateHandlers[this.state].apply(this, args));
-          } else if (nameOrStateHandlers['*']) {
-            return Promise.resolve(nameOrStateHandlers['*'].apply(this, args));
-          } else {
-            return Promise.reject(new Error('unhandled'));
-          }
-        });
-        this.ready = ret.then(() => {}, () => {});
-        return ret;
+        if (nameOrStateHandlers[this.state]) {
+          return Promise.resolve(nameOrStateHandlers[this.state].apply(this, args));
+        } else if (nameOrStateHandlers['*']) {
+          return Promise.resolve(nameOrStateHandlers['*'].apply(this, args));
+        } else {
+          return Promise.reject(new Error('unhandled'));
+        }
       }
     }
   }
