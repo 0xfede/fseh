@@ -7,6 +7,11 @@ chai.use(spies);
 
 describe('fseh', function() {
   describe('constructor', function() {
+    it('should create an empty Machine with no initial state', function() {
+      let m = new Machine();
+      should.not.exist(m.state);
+    });
+
     it('should create a Machine with no initial state', function() {
       let m = new Machine({ start: {} });
       should.not.exist(m.state);
@@ -73,6 +78,18 @@ describe('fseh', function() {
         should.fail();
       }, function(e) {
         e.message.should.equal('unknown_state');
+      });
+    });
+
+    it('should not transit to an undefined state', function() {
+      let m = new Machine({
+        start: {}
+      });
+      should.not.exist(m.state);
+      return m.enter().then(function() {
+        should.fail();
+      }, function(e) {
+        e.message.should.equal('invalid_state');
       });
     });
 
