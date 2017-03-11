@@ -195,7 +195,7 @@ var fsm = new Machine({
 });
 ```
 
-In the above example, the FSM will print to the console`setup completed` and `ready to talk` when transiting from `setup`
+In the above example, the FSM will print to the console f`setup completed` and `ready to talk` when transiting from `setup`
 to `ready` and it'll return `Sorry, can't talk right now` is, for example, a `greet` event is received while in the
 `setup` state. On the other hand, an `introduce` event received in the `start` state will be deferred, i.e. queued and processed
 in the next state, which in turn could handle it, deferred it again, ignore it (`noop`) or throw an error.
@@ -217,7 +217,7 @@ export type StateTable = { [name:string]: Handlers };
 
 ### Machine(states:StateTable, initialState?:string)
 
-Creates a new state machine with the definition passed as `states` and, optionally, transits it to the `intialState`.
+Creates a new state machine with the definition passed as `states` and, optionally, transits it to the `initialState`.
 
 ### Machine.process(name:string, ...args:any[]):Promise<any>
 
