@@ -157,6 +157,10 @@ There are three special event that can be defined in each state:
 - `*`, default event handler, triggered when a specific event handler was not found. If a default handler is not defined
 and an unknown event is received, an `Error('unhandled')` is returned.
 
+There are also two special event handlers:
+- `defer`, the event is queue and the machine will attempt to precess it as soon as another state is entered
+- `noop`, the event is ignored, without throwing an error
+
 ```js
 var Machine = require('fseh').Machine
 
@@ -196,11 +200,13 @@ to `ready` and it'll return `Sorry, can't talk right now` is, for example, a `gr
 The StateTable is defined in TypeScript as follows:
 
 ```ts
+export type EventHandler = (...args: any[]) => any;
+
 export interface Handlers {
-  ['exit']?: (...args: any[]) => any
-  ['entry']?: (...args: any[]) => any
-  ['*']?: (...args: any[]) => any
-  [name:string]: (...args: any[]) => any
+  ['exit']?: EventHandler
+  ['entry']?: EventHandler
+  ['*']?: EventHandler
+  [name:string]: EventHandler | 'defer' | 'noop' | undefined
 }
 
 export type StateTable = { [name:string]: Handlers };

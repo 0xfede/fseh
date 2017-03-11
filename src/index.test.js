@@ -6,7 +6,9 @@ var chai = require('chai')
 chai.use(spies);
 
 describe('fseh', function() {
+
   describe('constructor', function() {
+
     it('should create an empty Machine with no initial state', function() {
       let m = new Machine();
       should.not.exist(m.state);
@@ -54,9 +56,11 @@ describe('fseh', function() {
         err.message.should.equal('unhandled');
       });
     });
+
   });
 
   describe('enter', function() {
+
     it('should transit to a known state', function() {
       let m = new Machine({
         start: {}
@@ -152,9 +156,11 @@ describe('fseh', function() {
         });
       });
     });
+
   });
 
   describe('process', function() {
+
     it('should process a known event in a state that handles it', function() {
       let spy = chai.spy();
       let m = new Machine({
@@ -234,9 +240,140 @@ describe('fseh', function() {
         err.message.should.equal('bad_event');
       });
     });
+
+  });
+
+  describe('defer', function() {
+
+    it('should defer an event and process in the next state if it handles it (1)', function() {
+      let spy = chai.spy();
+      let m = new Machine({
+        state1: {
+          event1: 'defer'
+        },
+        state2: {
+          event1: spy
+        }
+      }, 'state1');
+
+      let h = m.eventHandler('event1');
+      h.should.be.a('function');
+      return h().then(() => {
+        spy.should.not.have.been.called();
+        return m.enter('state2').then(() => {
+          spy.should.have.been.called.once();
+        });
+      });
+    });
+
+    it('should defer an event and process in the next state if it handles it (2)', function() {
+      let spy = chai.spy();
+      let m = new Machine({
+        state1: {
+          event1: 'defer'
+        },
+        state2: {
+          event1: 'defer'
+        },
+        state3: {
+          event1: spy
+        }
+      }, 'state1');
+
+      let h = m.eventHandler('event1');
+      h.should.be.a('function');
+      return h().then(() => {
+        spy.should.not.have.been.called();
+        m.deferredEvents.length.should.equal(1);
+        return m.enter('state2').then(() => {
+          spy.should.not.have.been.called();
+          m.deferredEvents.length.should.equal(1);
+          return m.enter('state3').then(() => {
+            spy.should.have.been.called.once();
+            m.deferredEvents.length.should.equal(0);
+          });
+        });
+      });
+    });
+
+    it('should defer an event and process in the next state if it handles it (3)', function() {
+      let spy = chai.spy();
+      let m = new Machine({
+        state1: {
+          event1: 'defer'
+        },
+        state2: {
+          event1: 'defer'
+        },
+        state3: {
+          event1: spy
+        }
+      }, 'state1');
+
+      let h = m.eventHandler('event1');
+      h.should.be.a('function');
+      return h().then(() => {
+        spy.should.not.have.been.called();
+        m.deferredEvents.length.should.equal(1);
+        return m.enter('state2').then(() => {
+          return h().then(() => {
+            spy.should.not.have.been.called();
+            m.deferredEvents.length.should.equal(2);
+            return m.enter('state3').then(() => {
+              spy.should.have.been.called.twice();
+              m.deferredEvents.length.should.equal(0);
+            });
+          });
+        });
+      });
+    });
+
+    it('should precessed all deferred events even if some fail and return a resolve promise', function() {
+      let spy = chai.spy();
+      let m = new Machine({
+        state1: {
+          event1: 'defer',
+          event2: 'defer'
+        },
+        state2: {
+          event1: () => { throw new Error('a') },
+          event2: spy,
+        }
+      }, 'state1');
+
+      return m.process('event2')
+        .then(() => m.process('event1'))
+        .then(() => m.process('event2'))
+        .then(() => m.process('event1'))
+        .then(() => m.process('event2'))
+        .then(() => m.process('event1'))
+        .then(() => {
+          m.deferredEvents.length.should.equal(6);
+          return m.enter('state2').then(() => {
+            spy.should.have.been.called(3);
+          });
+        });
+    });
+
+  });
+
+  describe('noop', function() {
+
+    it('should do nothing', function () {
+      let m = new Machine({
+        state1: {
+          event1: 'noop'
+        }
+      }, 'state1');
+
+      let h = m.eventHandler('event1');
+      return h();
+    });
+
   });
 
   describe('eventHandler', function() {
+
     it('should create a default event handler', function() {
       let m = new Machine({
         start: {
@@ -355,9 +492,11 @@ describe('fseh', function() {
         });
       });
     });
+
   });
 
   describe('callbackEventHandler', function() {
+
     it('should call the callback with the result of the promise returned by the event handler', function(done) {
       let m = new Machine({
         start: {
@@ -407,6 +546,7 @@ describe('fseh', function() {
         h(5);
       })
     });
+
   });
 
 });

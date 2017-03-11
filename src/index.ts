@@ -4,7 +4,7 @@ export interface Handlers {
   ['exit']?: EventHandler
   ['entry']?: EventHandler
   ['*']?: EventHandler
-  [name:string]: EventHandler | undefined
+  [name:string]: EventHandler | 'defer' | 'noop' | undefined
 }
 
 export type StateTable = { [name:string]: Handlers };
@@ -12,6 +12,7 @@ export type StateTable = { [name:string]: Handlers };
 export class Machine {
   state?:string;
   ready:Promise<any> = Promise.resolve(true);
+  protected deferredEvents: { event:string, args:any[] }[] = [];
 
   constructor(public states:StateTable = {}, initialState?:string) {
     if (initialState) {
@@ -19,11 +20,41 @@ export class Machine {
     }
   }
 
+  protected defer(event:string): EventHandler {
+    return (...args:any[]) => {
+      this.deferredEvents.push({ event, args });
+    }
+  }
+  protected flushDeferred(): Promise<any> {
+    let p = Promise.resolve();
+    if (this.deferredEvents.length) {
+      let e = this.deferredEvents;
+      this.deferredEvents = [];
+      e.forEach(e => {
+        p = p.catch(() => {}).then(() => this.process(e.event, ...e.args));
+      });
+    }
+    return p.catch(() => {});
+  }
+
   process(name:string, ...args:any[]):Promise<any> {
     if (name) {
       let handler: EventHandler | undefined;
       if (this.state && this.states[this.state]) {
-        handler = this.states[this.state][name] || this.states[this.state]['*'];
+        switch(this.states[this.state][name]) {
+          case 'defer':
+            handler = this.defer(name);
+            break;
+          case 'noop':
+            handler = () => {};
+            break;
+          case undefined:
+            handler = this.states[this.state]['*'];
+            break;
+          default:
+            handler = this.states[this.state][name] as EventHandler;
+            break;
+        }
       }
       if (handler) {
         return Promise.resolve(handler.apply(this, args));
@@ -59,7 +90,7 @@ export class Machine {
           return Promise.resolve(newState.entry.apply(this, args));
         }
       });
-      return p;
+      return p.then(() => this.flushDeferred());
     }
   }
 
