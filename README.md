@@ -158,7 +158,8 @@ There are three special event that can be defined in each state:
 and an unknown event is received, an `Error('unhandled')` is returned.
 
 There are also two special event handlers:
-- `defer`, the event is queue and the machine will attempt to precess it as soon as another state is entered
+- `defer`, the event is queue and the machine will attempt to precess it as soon as another state is entered. Defererred
+events are processed after the `entry` event, if defined.
 - `noop`, the event is ignored, without throwing an error
 
 ```js
@@ -172,6 +173,7 @@ var fsm = new Machine({
     "exit": () => {
       console.log('setup completed');
     },
+    "introduce": "defer",
     "*": () => {
       return `Sorry, can't talk right now`;
     }
@@ -195,7 +197,8 @@ var fsm = new Machine({
 
 In the above example, the FSM will print to the console`setup completed` and `ready to talk` when transiting from `setup`
 to `ready` and it'll return `Sorry, can't talk right now` is, for example, a `greet` event is received while in the
-`setup` state.
+`setup` state. On the other hand, an `introduce` event received in the `start` state will be deferred, i.e. queued and processed
+in the next state, which in turn could handle it, deferred it again, ignore it (`noop`) or throw an error.
 
 The StateTable is defined in TypeScript as follows:
 

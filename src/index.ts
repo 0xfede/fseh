@@ -1,10 +1,10 @@
 export type EventHandler = (...args: any[]) => any;
 
 export interface Handlers {
-  ['exit']?: EventHandler
-  ['entry']?: EventHandler
-  ['*']?: EventHandler
-  [name:string]: EventHandler | 'defer' | 'noop' | undefined
+  ['exit']?: EventHandler;
+  ['entry']?: EventHandler;
+  ['*']?: EventHandler | 'defer' | 'noop';
+  [name:string]: EventHandler | 'defer' | 'noop' | undefined;
 }
 
 export type StateTable = { [name:string]: Handlers };
@@ -41,18 +41,16 @@ export class Machine {
     if (name) {
       let handler: EventHandler | undefined;
       if (this.state && this.states[this.state]) {
-        switch(this.states[this.state][name]) {
+        let tmp = this.states[this.state][name] || this.states[this.state]['*'];
+        switch(tmp) {
           case 'defer':
             handler = this.defer(name);
             break;
           case 'noop':
             handler = () => {};
             break;
-          case undefined:
-            handler = this.states[this.state]['*'];
-            break;
           default:
-            handler = this.states[this.state][name] as EventHandler;
+            handler = tmp as EventHandler;
             break;
         }
       }
