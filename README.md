@@ -208,7 +208,7 @@ export type EventHandler = (...args: any[]) => any;
 export interface Handlers {
   ['exit']?: EventHandler
   ['entry']?: EventHandler
-  ['*']?: EventHandler
+  ['*']?: EventHandler | 'defer' | 'noop';
   [name:string]: EventHandler | 'defer' | 'noop' | undefined
 }
 
