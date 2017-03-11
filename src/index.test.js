@@ -245,7 +245,7 @@ describe('fseh', function() {
 
   describe('defer', function() {
 
-    it('should defer an event and process in the next state if it handles it (1)', function() {
+    it('should defer an event and process it in the next state if handled (1)', function() {
       let spy = chai.spy();
       let m = new Machine({
         state1: {
@@ -266,7 +266,7 @@ describe('fseh', function() {
       });
     });
 
-    it('should defer an event and process in the next state if it handles it (2)', function() {
+    it('should defer an event and process it in the next state if handled (2)', function() {
       let spy = chai.spy();
       let m = new Machine({
         state1: {
@@ -296,7 +296,7 @@ describe('fseh', function() {
       });
     });
 
-    it('should defer an event and process in the next state if it handles it (3)', function() {
+    it('should defer an event and process it in the next state if handled (3)', function() {
       let spy = chai.spy();
       let m = new Machine({
         state1: {
@@ -328,7 +328,7 @@ describe('fseh', function() {
       });
     });
 
-    it('should precessed all deferred events even if some fail and return a resolve promise', function() {
+    it('should process all deferred events even if some fail and return a resolve promise', function() {
       let spy = chai.spy();
       let m = new Machine({
         state1: {
