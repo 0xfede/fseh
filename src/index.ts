@@ -11,6 +11,7 @@ export type StateTable = { [name:string]: Handlers };
 
 export class Machine {
   state?:string;
+  lastEvent?:string;
   ready:Promise<any> = Promise.resolve(true);
   protected deferredEvents: { event:string, args:any[] }[] = [];
 
@@ -55,6 +56,7 @@ export class Machine {
         }
       }
       if (handler) {
+        this.lastEvent = name;
         return Promise.resolve(handler.apply(this, args));
       } else {
         return Promise.reject(new Error('unhandled'));
