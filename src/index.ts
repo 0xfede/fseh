@@ -1,4 +1,6 @@
-export type EventHandler = (...args: any[]) => any;
+export interface EventHandler {
+  (...args: any[]): any;
+}
 
 export interface Handlers {
   ['exit']?: EventHandler;
@@ -26,19 +28,19 @@ export class Machine {
       this.deferredEvents.push({ event, args });
     }
   }
-  protected flushDeferred(): Promise<any> {
-    let p = Promise.resolve();
+  protected async flushDeferred(): Promise<any> {
     if (this.deferredEvents.length) {
       let e = this.deferredEvents;
       this.deferredEvents = [];
-      e.forEach(e => {
-        p = p.catch(() => {}).then(() => this.process(e.event, ...e.args));
-      });
+      for (let i = 0 ; i < e.length ; i++) {
+        try {
+          await this.process(e[i].event, ...e[i].args);
+        } catch(err) {}
+      }
     }
-    return p.catch(() => {});
   }
 
-  process(name:string, ...args:any[]):Promise<any> {
+  async process(name:string, ...args:any[]):Promise<any> {
     if (name) {
       let handler: EventHandler | undefined;
       if (this.state && this.states[this.state]) {
@@ -57,40 +59,38 @@ export class Machine {
       }
       if (handler) {
         this.lastEvent = name;
-        return Promise.resolve(handler.apply(this, args));
+        return handler.apply(this, args);
       } else {
-        return Promise.reject(new Error('unhandled'));
+        throw new Error('unhandled');
       }
     } else {
-      return Promise.reject(new Error('bad_event'));
+      throw new Error('bad_event');
     }
   }
 
-  enter(state:string, ...args: any[]):Promise<any> {
+  async enter(state:string, ...args: any[]):Promise<any> {
     if (!state) {
-      return Promise.reject(new Error('invalid_state'));
+      throw new Error('invalid_state');
     }
     let oldState = this.state ? this.states[this.state] : undefined;
     let newState = this.states[state];
-    if (this.state === state) {
-      return Promise.resolve(true);
-    } else if (!newState) {
-      return Promise.reject(new Error('unknown_state'));
-    } else {
-      let p = Promise.resolve(true);
-      p = p.then(() => {
+    if (this.state !== state) {
+      if (!newState) {
+        throw new Error('unknown_state');
+      } else {
         if (oldState && oldState.exit) {
-          return Promise.resolve(oldState.exit.apply(this, args))
+          await oldState.exit.apply(this, args);
         }
-      });
 
-      this.state = state;
-      p = p.then(() => {
+        this.state = state;
         if (newState.entry) {
-          return Promise.resolve(newState.entry.apply(this, args));
+          await newState.entry.apply(this, args);
         }
-      });
-      return p.then(() => this.flushDeferred());
+        await this.flushDeferred();
+        return true;
+      }
+    } else {
+      return true;
     }
   }
 
