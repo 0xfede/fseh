@@ -19,7 +19,7 @@ export class Machine {
 
   constructor(public states:StateTable = {}, initialState?:string) {
     if (initialState) {
-      this.ready = this.enter(initialState);
+      this.enter(initialState);
     }
   }
 
@@ -34,13 +34,13 @@ export class Machine {
       this.deferredEvents = [];
       for (let i = 0 ; i < e.length ; i++) {
         try {
-          await this.process(e[i].event, ...e[i].args);
+          await this.innerProcess(e[i].event, ...e[i].args);
         } catch(err) {}
       }
     }
   }
 
-  async process(name:string, ...args:any[]):Promise<any> {
+  protected async innerProcess(name:string, ...args:any[]):Promise<any> {
     if (name) {
       let handler: EventHandler | undefined;
       if (this.state && this.states[this.state]) {
@@ -68,39 +68,49 @@ export class Machine {
     }
   }
 
+  async process(name:string, ...args:any[]):Promise<any> {
+    await this.ready;
+    return this.innerProcess(name, ...args);
+  }
+
   async enter(state:string, ...args: any[]):Promise<any> {
     if (!state) {
       throw new Error('invalid_state');
     }
-    let oldState = this.state ? this.states[this.state] : undefined;
-    let newState = this.states[state];
-    if (this.state !== state) {
-      if (!newState) {
-        throw new Error('unknown_state');
-      } else {
-        if (oldState && oldState.exit) {
-          await oldState.exit.apply(this, args);
-        }
+    let ret = this.ready.then(async () => {
+      let oldState = this.state ? this.states[this.state] : undefined;
+      let newState = this.states[state];
+      if (this.state !== state) {
+        if (!newState) {
+          throw new Error('unknown_state');
+        } else {
+          if (oldState && oldState.exit) {
+            await oldState.exit.apply(this, args);
+          }
 
-        this.state = state;
-        if (newState.entry) {
-          await newState.entry.apply(this, args);
+          this.state = state;
+          if (newState.entry) {
+            await newState.entry.apply(this, args);
+          }
+          await this.flushDeferred();
+          return true;
         }
-        await this.flushDeferred();
+      } else {
         return true;
       }
-    } else {
-      return true;
-    }
+    });
+    this.ready = ret.catch(() => {});
+    return ret;
   }
 
   eventHandler(name:string): (...args: any[]) => Promise<any>;
   eventHandler(stateHandlers:Handlers): (...args: any[]) => Promise<any>;
   eventHandler(nameOrStateHandlers:any): (...args: any[]) => Promise<any> {
-    return (...args: any[]) => {
+    return async (...args: any[]) => {
       if (typeof(nameOrStateHandlers) === 'string') {
         return this.process(nameOrStateHandlers as string, ...args);
       } else {
+        await this.ready;
         if (this.state && nameOrStateHandlers[this.state]) {
           return Promise.resolve(nameOrStateHandlers[this.state].apply(this, args));
         } else if (nameOrStateHandlers['*']) {

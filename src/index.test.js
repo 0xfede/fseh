@@ -172,7 +172,6 @@ describe('fseh', function() {
       }, 'state1');
 
       let h = m.eventHandler('event1');
-      h.should.be.a('function');
       return h().then(function() {
         spy.should.have.been.called.once();
       });
@@ -191,7 +190,6 @@ describe('fseh', function() {
       }, 'state1');
 
       var h = m.eventHandler('event1');
-      h.should.be.a('function');
       return h().then(function() {
         spy1.should.have.been.called.once();
         m.enter('state2');
@@ -213,7 +211,6 @@ describe('fseh', function() {
       }, 'state1');
 
       let h = m.eventHandler('event1');
-      h.should.be.a('function');
       return h().then(function() {
         spy.should.have.been.called.once();
         return m.enter('state2').then(function() {
@@ -257,7 +254,6 @@ describe('fseh', function() {
       }, 'state1');
 
       let h = m.eventHandler('event1');
-      h.should.be.a('function');
       return h().then(() => {
         spy.should.not.have.been.called();
         return m.enter('state2').then(() => {
@@ -281,7 +277,6 @@ describe('fseh', function() {
       }, 'state1');
 
       let h = m.eventHandler('event1');
-      h.should.be.a('function');
       return h().then(() => {
         spy.should.not.have.been.called();
         m.deferredEvents.length.should.equal(1);
@@ -311,7 +306,6 @@ describe('fseh', function() {
       }, 'state1');
 
       let h = m.eventHandler('event1');
-      h.should.be.a('function');
       return h().then(() => {
         spy.should.not.have.been.called();
         m.deferredEvents.length.should.equal(1);
@@ -341,7 +335,8 @@ describe('fseh', function() {
         }
       }, 'state1');
 
-      return m.process('event2')
+      return m.ready
+        .then(() => m.process('event2'))
         .then(() => m.process('event1'))
         .then(() => m.process('event2'))
         .then(() => m.process('event1'))
@@ -384,7 +379,6 @@ describe('fseh', function() {
       let h = m.eventHandler({
         '*': spy
       });
-      h.should.be.a('function');
       return h().then(function() {
         spy.should.have.been.called();
       });
@@ -407,7 +401,6 @@ describe('fseh', function() {
         work: work_spy,
         end: end_spy
       });
-      h.should.be.a('function');
       return h().then(function() {
         start_spy.should.have.been.called.once();
         work_spy.should.not.have.been.called();
@@ -440,7 +433,6 @@ describe('fseh', function() {
       let h = m.eventHandler({
         '*': spy
       });
-      h.should.be.a('function');
       return h('aaa', 1).then(function() {
         spy.should.have.been.called.with('aaa', 1);
       });
