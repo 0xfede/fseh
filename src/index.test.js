@@ -1,9 +1,10 @@
-var chai = require('chai')
-  , spies = require('chai-spies')
+const chai = require('chai')
+  , sinon = require("sinon")
+  , sinonChai = require("sinon-chai")
   , should = chai.should()
   , Machine = require('../dist/index').Machine
 
-chai.use(spies);
+chai.use(sinonChai);
 
 describe('fseh', function() {
 
@@ -29,7 +30,7 @@ describe('fseh', function() {
     });
 
     it('should create a Machine that transits to the initial state and calls the entry function', function() {
-      let spy = chai.spy(function() {
+      let spy = sinon.spy(function() {
         should.exist(this.state);
         this.state.should.be.a('string');
         this.state.should.equal('start');
@@ -40,7 +41,7 @@ describe('fseh', function() {
         }
       }, 'start');
       return m.ready.then(function() {
-        spy.should.have.been.called();
+        spy.should.have.been.called;
       });
     });
 
@@ -126,9 +127,9 @@ describe('fseh', function() {
     });
 
     it('should perform a valid transition calling exit and entry functions', function() {
-      let start_entry = chai.spy();
-      let start_exit = chai.spy();
-      let end_entry = chai.spy();
+      let start_entry = sinon.spy();
+      let start_exit = sinon.spy();
+      let end_entry = sinon.spy();
 
       let m = new Machine({
         start: {
@@ -141,16 +142,16 @@ describe('fseh', function() {
       }, 'start');
       return m.ready.then(function() {
         should.exist(m.state);
-        start_entry.should.have.been.called();
-        start_exit.should.not.have.been.called();
-        end_entry.should.not.have.been.called();
+        start_entry.should.have.been.called;
+        start_exit.should.not.have.been.called;
+        end_entry.should.not.have.been.called;
         m.state.should.be.a('string');
         m.state.should.equal('start');
 
         return m.enter('end', 'aaa').then(function() {
-          start_entry.should.have.been.called.once();
-          start_exit.should.have.been.called();
-          end_entry.should.have.been.called.with('aaa');
+          start_entry.should.have.been.calledOnce;
+          start_exit.should.have.been.called;
+          end_entry.should.have.been.calledWith('aaa');
           m.state.should.be.a('string');
           m.state.should.equal('end');
         });
@@ -162,7 +163,7 @@ describe('fseh', function() {
   describe('process', function() {
 
     it('should process a known event in a state that handles it', function() {
-      let spy = chai.spy();
+      let spy = sinon.spy();
       let m = new Machine({
         state1: {
           event1: spy
@@ -173,13 +174,13 @@ describe('fseh', function() {
 
       let h = m.eventHandler('event1');
       return h().then(function() {
-        spy.should.have.been.called.once();
+        spy.should.have.been.calledOnce;
       });
     });
 
     it('should call the default handler if defined for an unknown event', function() {
-      let spy1 = chai.spy();
-      let spy2 = chai.spy();
+      let spy1 = sinon.spy();
+      let spy2 = sinon.spy();
       let m = new Machine({
         state1: {
           event1: spy1
@@ -191,17 +192,17 @@ describe('fseh', function() {
 
       var h = m.eventHandler('event1');
       return h().then(function() {
-        spy1.should.have.been.called.once();
+        spy1.should.have.been.calledOnce;
         m.enter('state2');
         return h().then(function() {
-          spy1.should.have.been.called.once();
-          spy2.should.have.been.called.once();
+          spy1.should.have.been.calledOnce;
+          spy2.should.have.been.calledOnce;
         });
       });
     });
 
     it('should return an error if an event is not handled and no default is defined', function() {
-      let spy = chai.spy();
+      let spy = sinon.spy();
       let m = new Machine({
         state1: {
           event1: spy
@@ -212,14 +213,14 @@ describe('fseh', function() {
 
       let h = m.eventHandler('event1');
       return h().then(function() {
-        spy.should.have.been.called.once();
+        spy.should.have.been.calledOnce;
         return m.enter('state2').then(function() {
           m.state.should.equal('state2');
           return h().then(function() {
             should.fail();
           }, function(err) {
             err.message.should.equal('unhandled');
-            spy.should.have.been.called.once();
+            spy.should.have.been.calledOnce;
           });
         });
       });
@@ -243,7 +244,7 @@ describe('fseh', function() {
   describe('defer', function() {
 
     it('should defer an event and process it in the next state if handled (1)', function() {
-      let spy = chai.spy();
+      let spy = sinon.spy();
       let m = new Machine({
         state1: {
           event1: 'defer'
@@ -255,15 +256,15 @@ describe('fseh', function() {
 
       let h = m.eventHandler('event1');
       return h().then(() => {
-        spy.should.not.have.been.called();
+        spy.should.not.have.been.called;
         return m.enter('state2').then(() => {
-          spy.should.have.been.called.once();
+          spy.should.have.been.calledOnce;
         });
       });
     });
 
     it('should defer an event and process it in the next state if handled (2)', function() {
-      let spy = chai.spy();
+      let spy = sinon.spy();
       let m = new Machine({
         state1: {
           event1: 'defer'
@@ -278,13 +279,13 @@ describe('fseh', function() {
 
       let h = m.eventHandler('event1');
       return h().then(() => {
-        spy.should.not.have.been.called();
+        spy.should.not.have.been.called;
         m.deferredEvents.length.should.equal(1);
         return m.enter('state2').then(() => {
-          spy.should.not.have.been.called();
+          spy.should.not.have.been.called;
           m.deferredEvents.length.should.equal(1);
           return m.enter('state3').then(() => {
-            spy.should.have.been.called.once();
+            spy.should.have.been.calledOnce;
             m.deferredEvents.length.should.equal(0);
           });
         });
@@ -292,7 +293,7 @@ describe('fseh', function() {
     });
 
     it('should defer an event and process it in the next state if handled (3)', function() {
-      let spy = chai.spy();
+      let spy = sinon.spy();
       let m = new Machine({
         state1: {
           event1: 'defer'
@@ -307,14 +308,14 @@ describe('fseh', function() {
 
       let h = m.eventHandler('event1');
       return h().then(() => {
-        spy.should.not.have.been.called();
+        spy.should.not.have.been.called;
         m.deferredEvents.length.should.equal(1);
         return m.enter('state2').then(() => {
           return h().then(() => {
-            spy.should.not.have.been.called();
+            spy.should.not.have.been.called;
             m.deferredEvents.length.should.equal(2);
             return m.enter('state3').then(() => {
-              spy.should.have.been.called.twice();
+              spy.should.have.been.calledTwice;
               m.deferredEvents.length.should.equal(0);
             });
           });
@@ -323,7 +324,7 @@ describe('fseh', function() {
     });
 
     it('should process all deferred events even if some fail and return a resolve promise', function() {
-      let spy = chai.spy();
+      let spy = sinon.spy();
       let m = new Machine({
         state1: {
           event1: 'defer',
@@ -345,7 +346,7 @@ describe('fseh', function() {
         .then(() => {
           m.deferredEvents.length.should.equal(6);
           return m.enter('state2').then(() => {
-            spy.should.have.been.called(3);
+            spy.should.have.been.calledThrice;
           });
         });
     });
@@ -375,12 +376,12 @@ describe('fseh', function() {
         }
       }, 'start');
 
-      let spy = chai.spy();
+      let spy = sinon.spy();
       let h = m.eventHandler({
         '*': spy
       });
       return h().then(function() {
-        spy.should.have.been.called();
+        spy.should.have.been.called;
       });
     });
 
@@ -393,28 +394,28 @@ describe('fseh', function() {
         end: {
         }
       }, 'start');
-      let start_spy = chai.spy();
-      let work_spy = chai.spy();
-      let end_spy = chai.spy();
+      let start_spy = sinon.spy();
+      let work_spy = sinon.spy();
+      let end_spy = sinon.spy();
       let h = m.eventHandler({
         start: start_spy,
         work: work_spy,
         end: end_spy
       });
       return h().then(function() {
-        start_spy.should.have.been.called.once();
-        work_spy.should.not.have.been.called();
-        end_spy.should.not.have.been.called();
+        start_spy.should.have.been.calledOnce;
+        work_spy.should.not.have.been.called;
+        end_spy.should.not.have.been.called;
         m.enter('work');
         return h().then(function() {
-          start_spy.should.have.been.called.once();
-          work_spy.should.have.been.called.once();
-          end_spy.should.not.have.been.called();
+          start_spy.should.have.been.calledOnce;
+          work_spy.should.have.been.calledOnce;
+          end_spy.should.not.have.been.called;
           m.enter('end');
           return h().then(function() {
-            start_spy.should.have.been.called.once();
-            work_spy.should.have.been.called.once();
-            end_spy.should.have.been.called.once();
+            start_spy.should.have.been.calledOnce;
+            work_spy.should.have.been.calledOnce;
+            end_spy.should.have.been.calledOnce;
           });
         });
       });
@@ -429,12 +430,12 @@ describe('fseh', function() {
         }
       }, 'start');
 
-      let spy = chai.spy();
+      let spy = sinon.spy();
       let h = m.eventHandler({
         '*': spy
       });
       return h('aaa', 1).then(function() {
-        spy.should.have.been.called.with('aaa', 1);
+        spy.should.have.been.calledWith('aaa', 1);
       });
     });
 
@@ -446,7 +447,7 @@ describe('fseh', function() {
         }
       }, 'start');
 
-      let spy = chai.spy();
+      let spy = sinon.spy();
       let h = m.eventHandler({
         end: spy
       });
