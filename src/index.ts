@@ -73,34 +73,33 @@ export class Machine {
     return this.innerProcess(name, ...args);
   }
 
+  protected processStateEventHandler(s: Handlers | undefined, e: 'entry'|'exit', args: any[]):Promise<any> {
+    return Promise.resolve(s && s[e] ? (s[e] as EventHandler).apply(this, args) : true);
+  }
+
   async enter(state:string, ...args: any[]):Promise<any> {
     if (!state) {
       throw new Error('invalid_state');
     }
-    let ret = this.ready.then(async () => {
-      let oldState = this.state ? this.states[this.state] : undefined;
-      let newState = this.states[state];
-      if (this.state !== state) {
-        if (!newState) {
-          throw new Error('unknown_state');
-        } else {
-          if (oldState && oldState.exit) {
-            await oldState.exit.apply(this, args);
-          }
-
-          this.state = state;
-          if (newState.entry) {
-            await newState.entry.apply(this, args);
-          }
-          await this.flushDeferred();
-          return true;
-        }
+    let oldState = this.state ? this.states[this.state] : undefined;
+    let newState = this.states[state];
+    if (this.state !== state) {
+      if (!newState) {
+        throw new Error('unknown_state');
       } else {
-        return true;
+        let unlockReady;
+        this.ready = new Promise(resolve => { unlockReady = resolve; });
+        try {
+          await this.processStateEventHandler(oldState, 'exit', args);
+          this.state = state;
+          await this.processStateEventHandler(newState, 'entry', args);
+          await this.flushDeferred();
+        } finally {
+          unlockReady && unlockReady();
+        }
       }
-    });
-    this.ready = ret.catch(() => {});
-    return ret;
+    }
+    return true;
   }
 
   eventHandler(name:string): (...args: any[]) => Promise<any>;

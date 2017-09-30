@@ -20,16 +20,15 @@ describe('fseh', function() {
       should.not.exist(m.state);
     });
 
-    it('should create a Machine that transits to the initial state', function() {
+    it('should create a Machine that transits to the initial state', async function() {
       let m = new Machine({ start: {} }, 'start');
-      return m.ready.then(function() {
-        should.exist(m.state);
-        m.state.should.be.a('string');
-        m.state.should.equal('start');
-      });
+      await m.ready;
+      should.exist(m.state);
+      m.state.should.be.a('string');
+      m.state.should.equal('start');
     });
 
-    it('should create a Machine that transits to the initial state and calls the entry function', function() {
+    it('should create a Machine that transits to the initial state and calls the entry function', async function() {
       let spy = sinon.spy(function() {
         should.exist(this.state);
         this.state.should.be.a('string');
@@ -40,9 +39,8 @@ describe('fseh', function() {
           entry: spy
         }
       }, 'start');
-      return m.ready.then(function() {
-        spy.should.have.been.called;
-      });
+      await m.ready;
+      spy.should.have.been.called;
     });
 
     it('should fail when processing an event before any state transition', function() {
@@ -62,16 +60,15 @@ describe('fseh', function() {
 
   describe('enter', function() {
 
-    it('should transit to a known state', function() {
+    it('should transit to a known state', async function() {
       let m = new Machine({
         start: {}
       });
       should.not.exist(m.state);
-      return m.enter('start').then(function() {
-        should.exist(m.state);
-        m.state.should.be.a('string');
-        m.state.should.equal('start');
-      });
+      await m.enter('start');
+      should.exist(m.state);
+      m.state.should.be.a('string');
+      m.state.should.equal('start');
     });
 
     it('should not transit to an unknown state', function() {
@@ -98,35 +95,33 @@ describe('fseh', function() {
       });
     });
 
-    it('should do nothing when transiting to the current state', function() {
+    it('should do nothing when transiting to the current state', async function() {
       let m = new Machine({
         start: {}
       }, 'start');
-      return m.enter('start').then(function(res) {
-        res.should.equal(true);
-        should.exist(m.state);
-        m.state.should.be.a('string');
-        m.state.should.equal('start');
-      });
+      await m.ready;
+      let res = await m.enter('start');
+      res.should.equal(true);
+      should.exist(m.state);
+      m.state.should.be.a('string');
+      m.state.should.equal('start');
     });
 
-    it('should perform a valid transition', function() {
+    it('should perform a valid transition', async function() {
       let m = new Machine({
         start: {},
         end: {}
       }, 'start');
-      return m.ready.then(function() {
-        should.exist(m.state);
-        m.state.should.be.a('string');
-        m.state.should.equal('start');
-        return m.enter('end').then(function() {
-          m.state.should.be.a('string');
-          m.state.should.equal('end');
-        });
-      });
+      await m.ready;
+      should.exist(m.state);
+      m.state.should.be.a('string');
+      m.state.should.equal('start');
+      await m.enter('end');
+      m.state.should.be.a('string');
+      m.state.should.equal('end');
     });
 
-    it('should perform a valid transition calling exit and entry functions', function() {
+    it('should perform a valid transition calling exit and entry functions', async function() {
       let start_entry = sinon.spy();
       let start_exit = sinon.spy();
       let end_entry = sinon.spy();
@@ -140,29 +135,48 @@ describe('fseh', function() {
           entry: end_entry
         }
       }, 'start');
-      return m.ready.then(function() {
-        should.exist(m.state);
-        start_entry.should.have.been.called;
-        start_exit.should.not.have.been.called;
-        end_entry.should.not.have.been.called;
-        m.state.should.be.a('string');
-        m.state.should.equal('start');
+      await m.ready;
+      should.exist(m.state);
+      start_entry.should.have.been.called;
+      start_exit.should.not.have.been.called;
+      end_entry.should.not.have.been.called;
+      m.state.should.be.a('string');
+      m.state.should.equal('start');
 
-        return m.enter('end', 'aaa').then(function() {
-          start_entry.should.have.been.calledOnce;
-          start_exit.should.have.been.called;
-          end_entry.should.have.been.calledWith('aaa');
-          m.state.should.be.a('string');
-          m.state.should.equal('end');
-        });
-      });
+      await m.enter('end', 'aaa');
+      start_entry.should.have.been.calledOnce;
+      start_exit.should.have.been.called;
+      end_entry.should.have.been.calledWith('aaa');
+      m.state.should.be.a('string');
+      m.state.should.equal('end');
     });
 
+    it('should enter a state that enters automatically another state', async function() {
+      let end_entry = sinon.spy();
+
+      let m = new Machine({
+        start: {
+          entry: function() {
+            return this.enter('next');
+          }
+        },
+        next: {
+          entry: function() {
+            this.enter('end')
+          }
+        },
+        end: {
+          entry: end_entry
+        }
+      });
+      await m.enter('start');
+      end_entry.should.have.been.calledOnce;
+    });
   });
 
   describe('process', function() {
 
-    it('should process a known event in a state that handles it', function() {
+    it('should process a known event in a state that handles it', async function() {
       let spy = sinon.spy();
       let m = new Machine({
         state1: {
@@ -173,12 +187,11 @@ describe('fseh', function() {
       }, 'state1');
 
       let h = m.eventHandler('event1');
-      return h().then(function() {
-        spy.should.have.been.calledOnce;
-      });
+      await h();
+      spy.should.have.been.calledOnce;
     });
 
-    it('should call the default handler if defined for an unknown event', function() {
+    it('should call the default handler if defined for an unknown event', async function() {
       let spy1 = sinon.spy();
       let spy2 = sinon.spy();
       let m = new Machine({
@@ -191,14 +204,12 @@ describe('fseh', function() {
       }, 'state1');
 
       var h = m.eventHandler('event1');
-      return h().then(function() {
-        spy1.should.have.been.calledOnce;
-        m.enter('state2');
-        return h().then(function() {
-          spy1.should.have.been.calledOnce;
-          spy2.should.have.been.calledOnce;
-        });
-      });
+      await h();
+      spy1.should.have.been.calledOnce;
+      await m.enter('state2');
+      await h();
+      spy1.should.have.been.calledOnce;
+      spy2.should.have.been.calledOnce;
     });
 
     it('should return an error if an event is not handled and no default is defined', function() {
@@ -243,7 +254,7 @@ describe('fseh', function() {
 
   describe('defer', function() {
 
-    it('should defer an event and process it in the next state if handled (1)', function() {
+    it('should defer an event and process it in the next state if handled (1)', async function() {
       let spy = sinon.spy();
       let m = new Machine({
         state1: {
@@ -255,44 +266,13 @@ describe('fseh', function() {
       }, 'state1');
 
       let h = m.eventHandler('event1');
-      return h().then(() => {
-        spy.should.not.have.been.called;
-        return m.enter('state2').then(() => {
-          spy.should.have.been.calledOnce;
-        });
-      });
+      await h();
+      spy.should.not.have.been.called;
+      await m.enter('state2')
+      spy.should.have.been.calledOnce;
     });
 
-    it('should defer an event and process it in the next state if handled (2)', function() {
-      let spy = sinon.spy();
-      let m = new Machine({
-        state1: {
-          event1: 'defer'
-        },
-        state2: {
-          event1: 'defer'
-        },
-        state3: {
-          event1: spy
-        }
-      }, 'state1');
-
-      let h = m.eventHandler('event1');
-      return h().then(() => {
-        spy.should.not.have.been.called;
-        m.deferredEvents.length.should.equal(1);
-        return m.enter('state2').then(() => {
-          spy.should.not.have.been.called;
-          m.deferredEvents.length.should.equal(1);
-          return m.enter('state3').then(() => {
-            spy.should.have.been.calledOnce;
-            m.deferredEvents.length.should.equal(0);
-          });
-        });
-      });
-    });
-
-    it('should defer an event and process it in the next state if handled (3)', function() {
+    it('should defer an event and process it in the next state if handled (2)', async function() {
       let spy = sinon.spy();
       let m = new Machine({
         state1: {
@@ -307,23 +287,45 @@ describe('fseh', function() {
       }, 'state1');
 
       let h = m.eventHandler('event1');
-      return h().then(() => {
-        spy.should.not.have.been.called;
-        m.deferredEvents.length.should.equal(1);
-        return m.enter('state2').then(() => {
-          return h().then(() => {
-            spy.should.not.have.been.called;
-            m.deferredEvents.length.should.equal(2);
-            return m.enter('state3').then(() => {
-              spy.should.have.been.calledTwice;
-              m.deferredEvents.length.should.equal(0);
-            });
-          });
-        });
-      });
+      await h();
+      spy.should.not.have.been.called;
+      m.deferredEvents.length.should.equal(1);
+      await m.enter('state2');
+      spy.should.not.have.been.called;
+      m.deferredEvents.length.should.equal(1);
+      await m.enter('state3');
+      spy.should.have.been.calledOnce;
+      m.deferredEvents.length.should.equal(0);
     });
 
-    it('should process all deferred events even if some fail and return a resolve promise', function() {
+    it('should defer an event and process it in the next state if handled (3)', async function() {
+      let spy = sinon.spy();
+      let m = new Machine({
+        state1: {
+          event1: 'defer'
+        },
+        state2: {
+          event1: 'defer'
+        },
+        state3: {
+          event1: spy
+        }
+      }, 'state1');
+
+      let h = m.eventHandler('event1');
+      await h();
+      spy.should.not.have.been.called;
+      m.deferredEvents.length.should.equal(1);
+      await m.enter('state2');
+      await h();
+      spy.should.not.have.been.called;
+      m.deferredEvents.length.should.equal(2);
+      await m.enter('state3');
+      spy.should.have.been.calledTwice;
+      m.deferredEvents.length.should.equal(0);
+    });
+
+    it('should process all deferred events even if some fail and return a resolve promise', async function() {
       let spy = sinon.spy();
       let m = new Machine({
         state1: {
@@ -336,19 +338,16 @@ describe('fseh', function() {
         }
       }, 'state1');
 
-      return m.ready
-        .then(() => m.process('event2'))
-        .then(() => m.process('event1'))
-        .then(() => m.process('event2'))
-        .then(() => m.process('event1'))
-        .then(() => m.process('event2'))
-        .then(() => m.process('event1'))
-        .then(() => {
-          m.deferredEvents.length.should.equal(6);
-          return m.enter('state2').then(() => {
-            spy.should.have.been.calledThrice;
-          });
-        });
+      await m.ready;
+      await m.process('event2');
+      await m.process('event1');
+      await m.process('event2');
+      await m.process('event1');
+      await m.process('event2');
+      await m.process('event1');
+      m.deferredEvents.length.should.equal(6);
+      await m.enter('state2');
+      spy.should.have.been.calledThrice;
     });
 
   });
@@ -370,7 +369,7 @@ describe('fseh', function() {
 
   describe('eventHandler', function() {
 
-    it('should create a default event handler', function() {
+    it('should create a default event handler', async function() {
       let m = new Machine({
         start: {
         }
@@ -380,12 +379,11 @@ describe('fseh', function() {
       let h = m.eventHandler({
         '*': spy
       });
-      return h().then(function() {
-        spy.should.have.been.called;
-      });
+      await h();
+      spy.should.have.been.called;
     });
 
-    it('should create an event handler whose state handlers are called according to the fsm state', function() {
+    it('should create an event handler whose state handlers are called according to the fsm state', async function() {
       let m = new Machine({
         start: {
         },
@@ -402,26 +400,23 @@ describe('fseh', function() {
         work: work_spy,
         end: end_spy
       });
-      return h().then(function() {
-        start_spy.should.have.been.calledOnce;
-        work_spy.should.not.have.been.called;
-        end_spy.should.not.have.been.called;
-        m.enter('work');
-        return h().then(function() {
-          start_spy.should.have.been.calledOnce;
-          work_spy.should.have.been.calledOnce;
-          end_spy.should.not.have.been.called;
-          m.enter('end');
-          return h().then(function() {
-            start_spy.should.have.been.calledOnce;
-            work_spy.should.have.been.calledOnce;
-            end_spy.should.have.been.calledOnce;
-          });
-        });
-      });
+      await h();
+      start_spy.should.have.been.calledOnce;
+      work_spy.should.not.have.been.called;
+      end_spy.should.not.have.been.called;
+      await m.enter('work');
+      await h();
+      start_spy.should.have.been.calledOnce;
+      work_spy.should.have.been.calledOnce;
+      end_spy.should.not.have.been.called;
+      await m.enter('end');
+      await h();
+      start_spy.should.have.been.calledOnce;
+      work_spy.should.have.been.calledOnce;
+      end_spy.should.have.been.calledOnce;
     });
 
-    it('should preserve the original arguments when calling a state handler', function() {
+    it('should preserve the original arguments when calling a state handler', async function() {
       let m = new Machine({
         start: {
           transitions: [ 'end' ]
@@ -434,9 +429,8 @@ describe('fseh', function() {
       let h = m.eventHandler({
         '*': spy
       });
-      return h('aaa', 1).then(function() {
-        spy.should.have.been.calledWith('aaa', 1);
-      });
+      await h('aaa', 1);
+      spy.should.have.been.calledWith('aaa', 1);
     });
 
     it('should fail when handling an event for a state not covered', function() {
@@ -458,7 +452,7 @@ describe('fseh', function() {
       }); // current state is start and it's not covered by the handler
     });
 
-    it('should return the return value of the original event handler', function() {
+    it('should return the return value of the original event handler', async function() {
       let m = new Machine({
         start: {
           ev: function() {
@@ -475,15 +469,12 @@ describe('fseh', function() {
           return 5;
         }
       });
-      return h().then(function(r) {
-        r.should.equal(5);
-        return m.eventHandler('ev')(1, 2, 3).then(function(r) {
-          r.should.equal(4);
-          return m.eventHandler('ev__')().then(function(r) {
-            r.should.equal(3);
-          });
-        });
-      });
+      let r = await h();
+      r.should.equal(5);
+      r = await m.eventHandler('ev')(1, 2, 3);
+      r.should.equal(4);
+      r = await m.eventHandler('ev__')();
+      r.should.equal(3);
     });
 
   });
