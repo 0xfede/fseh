@@ -15,7 +15,7 @@ export class Machine {
   state?:string;
   lastEvent?:string;
   ready:Promise<any> = Promise.resolve(true);
-  protected deferredEvents: { event:string, args:any[] }[] = [];
+  protected deferredEvents: { event:string, args:any[], resolve: (value?: any) => void }[] = [];
 
   constructor(public states:StateTable = {}, initialState?:string) {
     if (initialState) {
@@ -25,7 +25,9 @@ export class Machine {
 
   protected defer(event:string): EventHandler {
     return (...args:any[]) => {
-      this.deferredEvents.push({ event, args });
+      return new Promise(resolve => {
+        this.deferredEvents.push({ event, args, resolve });
+      });
     }
   }
   protected async flushDeferred(): Promise<any> {
@@ -34,7 +36,9 @@ export class Machine {
       this.deferredEvents = [];
       for (let i = 0 ; i < e.length ; i++) {
         try {
-          await this.innerProcess(e[i].event, ...e[i].args);
+          let result = this.innerProcess(e[i].event, ...e[i].args);
+          e[i].resolve(result);
+          await result;
         } catch(err) {}
       }
     }

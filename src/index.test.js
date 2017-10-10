@@ -1,10 +1,12 @@
 const chai = require('chai')
+  ,chaiAsPromised = require("chai-as-promised")
   , sinon = require("sinon")
   , sinonChai = require("sinon-chai")
   , should = chai.should()
   , Machine = require('../dist/index').Machine
 
 chai.use(sinonChai);
+chai.use(chaiAsPromised);
 
 describe('fseh', function() {
 
@@ -266,9 +268,10 @@ describe('fseh', function() {
       }, 'state1');
 
       let h = m.eventHandler('event1');
-      await h();
+      let deferred = h();
       spy.should.not.have.been.called;
-      await m.enter('state2')
+      await m.enter('state2');
+      await deferred;
       spy.should.have.been.calledOnce;
     });
 
@@ -287,13 +290,13 @@ describe('fseh', function() {
       }, 'state1');
 
       let h = m.eventHandler('event1');
-      await h();
+      let deferred = h();
       spy.should.not.have.been.called;
-      m.deferredEvents.length.should.equal(1);
       await m.enter('state2');
       spy.should.not.have.been.called;
       m.deferredEvents.length.should.equal(1);
       await m.enter('state3');
+      await deferred;
       spy.should.have.been.calledOnce;
       m.deferredEvents.length.should.equal(0);
     });
@@ -313,14 +316,14 @@ describe('fseh', function() {
       }, 'state1');
 
       let h = m.eventHandler('event1');
-      await h();
+      let deferred1 = h();
       spy.should.not.have.been.called;
-      m.deferredEvents.length.should.equal(1);
       await m.enter('state2');
-      await h();
+      let deferred2 = h();
       spy.should.not.have.been.called;
-      m.deferredEvents.length.should.equal(2);
       await m.enter('state3');
+      await deferred1;
+      await deferred2;
       spy.should.have.been.calledTwice;
       m.deferredEvents.length.should.equal(0);
     });
@@ -339,17 +342,30 @@ describe('fseh', function() {
       }, 'state1');
 
       await m.ready;
-      await m.process('event2');
-      await m.process('event1');
-      await m.process('event2');
-      await m.process('event1');
-      await m.process('event2');
-      await m.process('event1');
-      m.deferredEvents.length.should.equal(6);
+      m.process('event2');
+      m.process('event1').catch(() => {});
+      m.process('event2');
+      m.process('event1').catch(() => {});
+      m.process('event2');
+      m.process('event1').catch(() => {});
       await m.enter('state2');
       spy.should.have.been.calledThrice;
     });
 
+    it('should return a failed promise if a deferred event is ignored in a subsequent state', async function() {
+      let m = new Machine({
+        state1: {
+          event1: 'defer',
+        },
+        state2: {
+        }
+      }, 'state1');
+
+      await m.ready;
+      let deferred = m.process('event1');
+      await m.enter('state2');
+      deferred.should.eventually.be.rejected;
+    });
   });
 
   describe('noop', function() {
