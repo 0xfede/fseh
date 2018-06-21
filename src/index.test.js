@@ -89,7 +89,7 @@ describe('fseh', function() {
       let m = new Machine({
         start: {
           entry() {
-            throw new Error('x');
+            throw new Error('y');
           }
         }
       });
@@ -97,7 +97,7 @@ describe('fseh', function() {
       return m.enter('start').then(function() {
         should.fail();
       }, function(e) {
-        e.message.should.equal('x');
+        e.message.should.equal('y');
       });
     });
 
