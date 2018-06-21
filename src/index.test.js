@@ -85,6 +85,22 @@ describe('fseh', function() {
       });
     });
 
+    it('should gracefully handle errors when entering state', function() {
+      let m = new Machine({
+        start: {
+          entry() {
+            throw new Error('x');
+          }
+        }
+      });
+      should.not.exist(m.state);
+      return m.enter('start').then(function() {
+        should.fail();
+      }, function(e) {
+        e.message.should.equal('x');
+      });
+    });
+
     it('should not transit to an undefined state', function() {
       let m = new Machine({
         start: {}
