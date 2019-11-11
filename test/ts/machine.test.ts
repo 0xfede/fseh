@@ -55,7 +55,7 @@ describe('Machine', function() {
       });
       m.process('event').then(
         function() {
-          throw 'failed';
+          throw new Error('failed');
         },
         function(err) {
           err.message.should.equal('unhandled');
@@ -85,7 +85,7 @@ describe('Machine', function() {
       should.not.exist(m.state);
       return m.enter('blabla').then(
         function() {
-          throw 'failed';
+          throw new Error('failed');
         },
         function(e) {
           e.message.should.equal('unknown_state');
@@ -104,7 +104,7 @@ describe('Machine', function() {
       should.not.exist(m.state);
       return m.enter('start').then(
         function() {
-          throw 'failed';
+          throw new Error('failed');
         },
         function(e) {
           e.message.should.equal('y');
@@ -119,7 +119,7 @@ describe('Machine', function() {
       should.not.exist(m.state);
       return m.enter(undefined as any).then(
         function() {
-          throw 'failed';
+          throw new Error('failed');
         },
         function(e) {
           e.message.should.equal('invalid_state');
@@ -289,7 +289,7 @@ describe('Machine', function() {
           }
           return h().then(
             function() {
-              throw 'failed';
+              throw new Error('failed');
             },
             function(err) {
               err.message.should.equal('unhandled');
@@ -310,7 +310,7 @@ describe('Machine', function() {
 
       return m.process(undefined as any).then(
         function() {
-          throw 'failed';
+          throw new Error('failed');
         },
         function(err) {
           err.message.should.equal('bad_event');
@@ -546,7 +546,7 @@ describe('Machine', function() {
       });
       return h().then(
         function() {
-          throw 'failed';
+          throw new Error('failed');
         },
         function(err) {
           err.message.should.equal('unhandled');
