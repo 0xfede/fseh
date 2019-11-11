@@ -1,23 +1,22 @@
-sudo: false
+dist: trusty
 language: node_js
-cache:
-  directories:
-    - node_modules
+node_js:
+  - lts/*
+services:
+  - docker
 branches:
   only:
     - master
 notifications:
   email: false
-node_js:
-  - '8'
 before_install:
-  - npm i -g npm@^2.0.0
+
 before_script:
   - npm prune
 script:
-  - npm run build
+  - npm run build:all
   - npm run cover
   - npm run check-coverage
 after_success:
-  - npm run report-coverage
   - npm run semantic-release
+  - npm run report-coverage
