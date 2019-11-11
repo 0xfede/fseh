@@ -38,3 +38,4 @@ jspm_packages
 
 dist
 test-results
+test/ts/*.js
