@@ -16,7 +16,7 @@
     "commit": "git-cz",
     "check-coverage": "nyc check-coverage --statements 100 --branches 99 --functions 100 --lines 100",
     "watch:test": "npm t -- -w",
-    "test": "mocha --exit --no-timeouts --recursive --reporter mochawesome --reporter-options reportDir=test-results test/**/*.test.js",
+    "test": "find ./test/ts -type f -name '*.js' -delete && npm run build && tsc -p test && mocha --exit --no-timeouts --recursive --reporter mochawesome --reporter-options reportDir=test-results test/**/*.test.js",
     "test:debug": "find ./test/ts -type f -name '*.js' -delete && npm run build && npm run build:tests && mocha --exit --no-timeouts --inspect-brk --recursive test/**/*.test.js",
     "test:watch": "nodemon -e ts --ignore dist/ --ignore 'test/ts/*.js' --exec npm run test",
     "semantic-release": "semantic-release",
@@ -51,8 +51,13 @@
   "devDependencies": {
     "@commitlint/cli": "^8.2.0",
     "@commitlint/config-conventional": "^8.2.0",
+    "@types/chai": "^4.2.4",
+    "@types/chai-as-promised": "^7.1.2",
+    "@types/chai-spies": "^1.0.1",
+    "@types/mocha": "^5.2.7",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
+    "chai-spies": "^1.0.0",
     "commitizen": "^4.0.3",
     "commitlint": "^8.2.0",
     "coveralls": "^3.0.7",
@@ -64,8 +69,6 @@
     "rimraf": "^3.0.0",
     "semantic-release": "^15.13.30",
     "supertest": "^4.0.2",
-    "sinon": "^7.5.0",
-    "sinon-chai": "^3.3.0",
     "typescript": "^3.7.2"
   },
   "config": {
