@@ -6,49 +6,49 @@ export interface Handlers {
   ['exit']?: EventHandler;
   ['entry']?: EventHandler;
   ['*']?: EventHandler | 'defer' | 'noop';
-  [name:string]: EventHandler | 'defer' | 'noop' | undefined;
+  [name: string]: EventHandler | 'defer' | 'noop' | undefined;
 }
 
-export type StateTable = { [name:string]: Handlers };
+export type StateTable = { [name: string]: Handlers };
 
 export class Machine {
-  state?:string;
-  lastEvent?:string;
-  ready:Promise<any> = Promise.resolve(true);
-  protected deferredEvents: { event:string, args:any[], resolve: (value?: any) => void }[] = [];
+  state?: string;
+  lastEvent?: string;
+  ready: Promise<any> = Promise.resolve(true);
+  protected deferredEvents: { event: string; args: any[]; resolve: (value?: any) => void }[] = [];
 
-  constructor(public states:StateTable = {}, initialState?:string) {
+  constructor(public states: StateTable = {}, initialState?: string) {
     if (initialState) {
       this.enter(initialState);
     }
   }
 
-  protected defer(event:string): EventHandler {
-    return (...args:any[]) => {
+  protected defer(event: string): EventHandler {
+    return (...args: any[]) => {
       return new Promise(resolve => {
         this.deferredEvents.push({ event, args, resolve });
       });
-    }
+    };
   }
   protected async flushDeferred(): Promise<any> {
     if (this.deferredEvents.length) {
       let e = this.deferredEvents;
       this.deferredEvents = [];
-      for (let i = 0 ; i < e.length ; i++) {
+      for (let i = 0; i < e.length; i++) {
         try {
           let result = this.innerProcess(e[i].event, ...e[i].args);
           e[i].resolve(result);
-        } catch(err) {}
+        } catch (err) {}
       }
     }
   }
 
-  protected async innerProcess(name:string, ...args:any[]):Promise<any> {
+  protected async innerProcess(name: string, ...args: any[]): Promise<any> {
     if (name) {
       let handler: EventHandler | undefined;
       if (this.state && this.states[this.state]) {
         let tmp = this.states[this.state][name] || this.states[this.state]['*'];
-        switch(tmp) {
+        switch (tmp) {
           case 'defer':
             handler = this.defer(name);
             break;
@@ -71,16 +71,16 @@ export class Machine {
     }
   }
 
-  async process(name:string, ...args:any[]):Promise<any> {
+  async process(name: string, ...args: any[]): Promise<any> {
     await this.ready;
     return this.innerProcess(name, ...args);
   }
 
-  protected processStateEventHandler(s: Handlers | undefined, e: 'entry'|'exit', args: any[]):Promise<any> {
+  protected processStateEventHandler(s: Handlers | undefined, e: 'entry' | 'exit', args: any[]): Promise<any> {
     return Promise.resolve(s && s[e] ? (s[e] as EventHandler).apply(this, args) : true);
   }
 
-  enter(state:string, ...args: any[]):Promise<any> {
+  enter(state: string, ...args: any[]): Promise<any> {
     if (!state) {
       return Promise.reject(new Error('invalid_state'));
     }
@@ -91,7 +91,9 @@ export class Machine {
         return Promise.reject(new Error('unknown_state'));
       } else {
         let unlockReady;
-        this.ready = new Promise(resolve => { unlockReady = resolve; });
+        this.ready = new Promise(resolve => {
+          unlockReady = resolve;
+        });
         this.state = state;
         return (async () => {
           try {
@@ -100,7 +102,7 @@ export class Machine {
             await this.flushDeferred();
             unlockReady && unlockReady();
             return true;
-          } catch(err) {
+          } catch (err) {
             unlockReady && unlockReady();
             throw err;
           }
@@ -111,11 +113,11 @@ export class Machine {
     }
   }
 
-  eventHandler(name:string): (...args: any[]) => Promise<any>;
-  eventHandler(stateHandlers:Handlers): (...args: any[]) => Promise<any>;
-  eventHandler(nameOrStateHandlers:any): (...args: any[]) => Promise<any> {
+  eventHandler(name: string): (...args: any[]) => Promise<any>;
+  eventHandler(stateHandlers: Handlers): (...args: any[]) => Promise<any>;
+  eventHandler(nameOrStateHandlers: any): (...args: any[]) => Promise<any> {
     return async (...args: any[]) => {
-      if (typeof(nameOrStateHandlers) === 'string') {
+      if (typeof nameOrStateHandlers === 'string') {
         return this.process(nameOrStateHandlers as string, ...args);
       } else {
         await this.ready;
@@ -127,24 +129,27 @@ export class Machine {
           return Promise.reject(new Error('unhandled'));
         }
       }
-    }
+    };
   }
 
-  callbackEventHandler(name:string): (...args: any[]) => void;
-  callbackEventHandler(stateHandlers:Handlers): (...args: any[]) => void;
-  callbackEventHandler(nameOrStateHandlers:any): (...args: any[]) => void {
+  callbackEventHandler(name: string): (...args: any[]) => void;
+  callbackEventHandler(stateHandlers: Handlers): (...args: any[]) => void;
+  callbackEventHandler(nameOrStateHandlers: any): (...args: any[]) => void {
     let h = this.eventHandler(nameOrStateHandlers);
     return (...args: any[]) => {
       if (args.length && typeof args[args.length - 1] === 'function') {
         let cb = args.pop();
-        h(args).then((...args:any[]) => {
-          cb(null, ...args);
-        }, err => {
-          cb(err);
-        });
+        h(args).then(
+          (...args: any[]) => {
+            cb(null, ...args);
+          },
+          err => {
+            cb(err);
+          }
+        );
       } else {
         h(...args);
       }
-    }
+    };
   }
 }
