@@ -1,23 +1,14 @@
-export interface EventHandler {
-  (...args: any[]): any;
-}
+import { EventEmitter } from 'events';
+import { EventHandler, Handlers, StateTable } from './types';
 
-export interface Handlers {
-  ['exit']?: EventHandler;
-  ['entry']?: EventHandler;
-  ['*']?: EventHandler | 'defer' | 'noop';
-  [name: string]: EventHandler | 'defer' | 'noop' | undefined;
-}
-
-export type StateTable = { [name: string]: Handlers };
-
-export class Machine {
+export class Machine extends EventEmitter {
   state?: string;
   lastEvent?: string;
   ready: Promise<any> = Promise.resolve(true);
   protected deferredEvents: { event: string; args: any[]; resolve: (value?: any) => void }[] = [];
 
   constructor(public states: StateTable = {}, initialState?: string) {
+    super();
     if (initialState) {
       this.enter(initialState);
     }
@@ -90,6 +81,12 @@ export class Machine {
       if (!newState) {
         return Promise.reject(new Error('unknown_state'));
       } else {
+        if (this.state) {
+          this.emit(`${this.state}:exit`, state, ...args);
+          this.emit('exit', this.state, state, ...args);
+        }
+        this.emit(`${state}:pre-entry`, ...args);
+        this.emit('pre-entry', state, ...args);
         let unlockReady;
         this.ready = new Promise(resolve => {
           unlockReady = resolve;
@@ -101,6 +98,9 @@ export class Machine {
             await this.processStateEventHandler(newState, 'entry', args);
             await this.flushDeferred();
             unlockReady && unlockReady();
+            this.emit(`${state}:entry`, ...args);
+            this.emit('entry', state, ...args);
+            this.emit(state, ...args);
             return true;
           } catch (err) {
             unlockReady && unlockReady();

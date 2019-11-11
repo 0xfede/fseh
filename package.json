@@ -99,5 +99,8 @@
       "text"
     ],
     "sourceMap": true
+  },
+  "dependencies": {
+    "eredita": "^1.1.4"
   }
 }

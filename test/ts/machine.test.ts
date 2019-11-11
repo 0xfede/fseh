@@ -224,6 +224,61 @@ describe('Machine', function() {
       await m.enter('start');
       end_entry.should.have.been.called.once;
     });
+
+    it('should emit events when entering a state', async function() {
+      const m = new Machine({
+        start: {}
+      });
+
+      let named_pre_entry = chai.spy();
+      let pre_entry = chai.spy();
+      let named_entry = chai.spy();
+      let entry = chai.spy();
+      let named = chai.spy();
+
+      m.on('start:pre-entry', named_pre_entry);
+      m.on('pre-entry', pre_entry);
+      m.on('start:entry', named_entry);
+      m.on('entry', entry);
+      m.on('start', named);
+
+      should.not.exist(m.state);
+      await m.enter('start', 'aaa');
+      should.exist(m.state);
+      if (m.state) {
+        m.state.should.be.a('string');
+        m.state.should.equal('start');
+      }
+      named_pre_entry.should.have.been.called.once;
+      pre_entry.should.have.been.called.once;
+      pre_entry.should.have.been.called.with('start', 'aaa');
+      named_entry.should.have.been.called.once;
+      entry.should.have.been.called.once;
+      entry.should.have.been.called.with('start', 'aaa');
+      named.should.have.been.called.once;
+    });
+
+    it('should emit events when exiting a state', async function() {
+      const m = new Machine(
+        {
+          start: {},
+          end: {}
+        },
+        'start'
+      );
+
+      let named_exit = chai.spy();
+      let exit = chai.spy();
+
+      m.on('start:exit', named_exit);
+      m.on('exit', exit);
+
+      await m.ready;
+      await m.enter('end', 'aaa');
+      named_exit.should.have.been.called.once;
+      exit.should.have.been.called.once;
+      exit.should.have.been.called.with('start');
+    });
   });
 
   describe('process', function() {
