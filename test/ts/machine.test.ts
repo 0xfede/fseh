@@ -457,32 +457,54 @@ describe('Machine', function() {
     });
 
     it('should process all deferred events even if some fail and return a resolve promise', async function() {
+      debugger;
       let spy = chai.spy();
       let m = new Machine(
         {
           state1: {
             event1: 'defer',
-            event2: 'defer'
+            event2: 'defer',
+            event3: 'defer',
+            event4: 'defer'
           },
           state2: {
+            event1: 'defer',
+            event2: 'defer',
+            event3: 'defer',
+            event4: 'defer'
+          },
+          state3: {
             event1: () => {
               throw new Error('a');
             },
-            event2: spy
+            event2: spy,
+            event3: 'noop'
           }
         },
         'state1'
       );
 
       await m.ready;
+      m.process('event4').catch(() => {});
+      m.process('event3');
       m.process('event2');
       m.process('event1').catch(() => {});
+      m.process('event4').catch(() => {});
+      m.process('event3');
       m.process('event2');
       m.process('event1').catch(() => {});
+      m.process('event4').catch(() => {});
+      m.process('event3');
       m.process('event2');
       m.process('event1').catch(() => {});
-      await m.enter('state2');
-      spy.should.have.been.called.exactly(3);
+      return new Promise(resolve => {
+        setTimeout(async () => {
+          await m.enter('state2');
+          await m.enter('state3');
+          spy.should.have.been.called.exactly(3);
+          resolve();
+        }, 10);
+      });
     });
 
     it('should return a failed promise if a deferred event is ignored in a subsequent state', async function() {
