@@ -62,11 +62,6 @@ describe('Machine', function() {
         }
       );
     });
-
-    it('should use the specified logger prefix', async function() {
-      let m = new Machine({ start: {} }, undefined, undefined, 'test');
-      (m as any).loggerPrefix.should.equal('test ');
-    });
   });
 
   describe('enter', function() {

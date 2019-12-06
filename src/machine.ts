@@ -8,12 +8,10 @@ export class Machine extends EventEmitter {
   ready: Promise<any> = Promise.resolve(true);
   protected deferredEvents: { event: string; args: any[]; resolve: (value?: any) => void }[] = [];
   protected logger: Logger;
-  protected loggerPrefix: string;
 
   constructor(public states: StateTable = {}, initialState?: string, loggerName: string = 'fseh', loggerPrefix?: string) {
     super();
-    this.logger = getLogger(loggerName);
-    this.loggerPrefix = loggerPrefix ? `${loggerPrefix} ` : '';
+    this.logger = getLogger(loggerName, loggerPrefix);
     if (initialState) {
       this.enter(initialState);
     }
@@ -47,17 +45,15 @@ export class Machine extends EventEmitter {
         if (tmp) {
           switch (tmp) {
             case 'defer':
-              this.logger.debug(`${this.loggerPrefix}DEFERRING ${deferred ? 'deferred ' : ''}event ${name.toUpperCase()} in state ${this.state.toUpperCase()}`);
+              this.logger.debug(`DEFERRING ${deferred ? 'deferred ' : ''}event ${name.toUpperCase()} in state ${this.state.toUpperCase()}`);
               handler = this.defer(name);
               break;
             case 'noop':
-              this.logger.debug(`${this.loggerPrefix}IGNORING ${deferred ? 'deferred ' : ''}event ${name.toUpperCase()} in state ${this.state.toUpperCase()}`);
+              this.logger.debug(`IGNORING ${deferred ? 'deferred ' : ''}event ${name.toUpperCase()} in state ${this.state.toUpperCase()}`);
               handler = () => {};
               break;
             default:
-              this.logger.debug(
-                `${this.loggerPrefix}PROCESSING ${deferred ? 'deferred ' : ''}event ${name.toUpperCase()} in state ${this.state.toUpperCase()}`
-              );
+              this.logger.debug(`PROCESSING ${deferred ? 'deferred ' : ''}event ${name.toUpperCase()} in state ${this.state.toUpperCase()}`);
               handler = tmp as EventHandler;
               break;
           }
@@ -67,11 +63,7 @@ export class Machine extends EventEmitter {
         this.lastEvent = name;
         return handler.apply(this, args);
       } else {
-        this.logger.error(
-          `${this.loggerPrefix}UNHANDLED ${deferred ? 'deferred ' : ''}event ${name.toUpperCase()} in state ${
-            this.state ? this.state.toUpperCase() : 'unknown'
-          }`
-        );
+        this.logger.error(`UNHANDLED ${deferred ? 'deferred ' : ''}event ${name.toUpperCase()} in state ${this.state ? this.state.toUpperCase() : 'unknown'}`);
         throw new Error('unhandled');
       }
     } else {
@@ -96,15 +88,15 @@ export class Machine extends EventEmitter {
     let newState = this.states[state];
     if (this.state !== state) {
       if (!newState) {
-        this.logger.error(`${this.loggerPrefix}UNKNOWN state ${state.toUpperCase()}`);
+        this.logger.error(`UNKNOWN state ${state.toUpperCase()}`);
         return Promise.reject(new Error('unknown_state'));
       } else {
         if (this.state) {
-          this.logger.debug(`${this.loggerPrefix}TRANSISTING from ${this.state.toUpperCase()} to ${state.toUpperCase()}`);
+          this.logger.debug(`TRANSISTING from ${this.state.toUpperCase()} to ${state.toUpperCase()}`);
           this.emit(`${this.state}:exit`, state, ...args);
           this.emit('exit', this.state, state, ...args);
         } else {
-          this.logger.debug(`${this.loggerPrefix}TRANSISTING to ${state.toUpperCase()}`);
+          this.logger.debug(`TRANSISTING to ${state.toUpperCase()}`);
         }
         this.emit(`${state}:pre-entry`, ...args);
         this.emit('pre-entry', state, ...args);
