@@ -47,20 +47,18 @@ describe('Machine', function() {
       spy.should.have.been.called;
     });
 
-    it('should fail when processing an event before any state transition', function() {
+    it('should fail when processing an event before any state transition', async function() {
       let m = new Machine({
         start: {
           event: () => {}
         }
       });
-      m.process('event').then(
-        function() {
-          throw new Error('failed');
-        },
-        function(err) {
-          err.message.should.equal('unhandled');
-        }
-      );
+      try {
+        await m.process('event');
+        throw new Error('failed');
+      } catch (err) {
+        err.name.should.equal('UnhandledEventError');
+      }
     });
   });
 
@@ -88,7 +86,7 @@ describe('Machine', function() {
           throw new Error('failed');
         },
         function(e) {
-          e.message.should.equal('unknown_state');
+          e.name.should.equal('UnknownStateError');
         }
       );
     });
@@ -122,7 +120,7 @@ describe('Machine', function() {
           throw new Error('failed');
         },
         function(e) {
-          e.message.should.equal('invalid_state');
+          e.name.should.equal('InvalidStateError');
         }
       );
     });
@@ -347,7 +345,7 @@ describe('Machine', function() {
               throw new Error('failed');
             },
             function(err) {
-              err.message.should.equal('unhandled');
+              err.name.should.equal('UnhandledEventError');
               spy.should.have.been.called.once;
             }
           );
@@ -368,7 +366,7 @@ describe('Machine', function() {
           throw new Error('failed');
         },
         function(err) {
-          err.message.should.equal('bad_event');
+          err.name.should.equal('InvalidEventError');
         }
       );
     });
@@ -563,7 +561,8 @@ describe('Machine', function() {
         {
           start: {},
           work: {},
-          end: {}
+          end: {},
+          unexp: {}
         },
         'start'
       );
@@ -589,6 +588,25 @@ describe('Machine', function() {
       start_spy.should.have.been.called.once;
       work_spy.should.have.been.called.once;
       end_spy.should.have.been.called.once;
+      await m.enter('unexp');
+      debugger;
+      await h().then(
+        () => {
+          throw new Error('should have failed');
+        },
+        _err => {
+          return true;
+        }
+      );
+      delete m.state;
+      await h().then(
+        () => {
+          throw new Error('should have failed');
+        },
+        _err => {
+          return true;
+        }
+      );
     });
 
     it('should preserve the original arguments when calling a state handler', async function() {
@@ -626,7 +644,7 @@ describe('Machine', function() {
           throw new Error('failed');
         },
         function(err) {
-          err.message.should.equal('unhandled');
+          err.name.should.equal('UnhandledEventError');
         }
       ); // current state is start and it's not covered by the handler
     });
@@ -696,8 +714,8 @@ describe('Machine', function() {
 
       let h = m.callbackEventHandler('aaa');
 
-      h(5, function(err, res) {
-        err.message.should.equal('unhandled');
+      h(5, function(err, _res) {
+        err.name.should.equal('UnhandledEventError');
         done();
       });
     });

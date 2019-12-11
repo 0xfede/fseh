@@ -1,5 +1,6 @@
 import { getLogger, Logger } from 'debuggo';
 import { EventEmitter } from 'events';
+import { InvalidEventError, InvalidStateError, UnhandledEventError, UnknownStateError } from './errors';
 import { EventHandler, Handlers, StateTable } from './types';
 
 export class Machine extends EventEmitter {
@@ -64,10 +65,10 @@ export class Machine extends EventEmitter {
         return handler.apply(this, args);
       } else {
         this.logger.error(`UNHANDLED ${deferred ? 'deferred ' : ''}event ${name.toUpperCase()} in state ${this.state ? this.state.toUpperCase() : 'unknown'}`);
-        throw new Error('unhandled');
+        throw new UnhandledEventError(name, this.state, deferred, args);
       }
     } else {
-      throw new Error('bad_event');
+      throw new InvalidEventError(name, this.state, deferred, args);
     }
   }
 
@@ -82,14 +83,14 @@ export class Machine extends EventEmitter {
 
   enter(state: string, ...args: any[]): Promise<any> {
     if (!state) {
-      return Promise.reject(new Error('invalid_state'));
+      return Promise.reject(new InvalidStateError(state, args));
     }
     let oldState = this.state ? this.states[this.state] : undefined;
     let newState = this.states[state];
     if (this.state !== state) {
       if (!newState) {
         this.logger.error(`UNKNOWN state ${state.toUpperCase()}`);
-        return Promise.reject(new Error('unknown_state'));
+        return Promise.reject(new UnknownStateError(state, args));
       } else {
         if (this.state) {
           this.logger.debug(`TRANSISTING from ${this.state.toUpperCase()} to ${state.toUpperCase()}`);
@@ -135,11 +136,12 @@ export class Machine extends EventEmitter {
       } else {
         await this.ready;
         if (this.state && nameOrStateHandlers[this.state]) {
-          return Promise.resolve(nameOrStateHandlers[this.state].apply(this, args));
+          return nameOrStateHandlers[this.state].apply(this, args);
         } else if (nameOrStateHandlers['*']) {
-          return Promise.resolve(nameOrStateHandlers['*'].apply(this, args));
+          return nameOrStateHandlers['*'].apply(this, args);
         } else {
-          return Promise.reject(new Error('unhandled'));
+          this.logger.error(`UNHANDLED event ${(this.lastEvent || 'unknown').toUpperCase()} in state ${this.state ? this.state.toUpperCase() : 'unknown'}`);
+          throw new UnhandledEventError(this.lastEvent || 'unknown', this.state, false, args);
         }
       }
     };
