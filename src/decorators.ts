@@ -32,7 +32,9 @@ export function fsm(initialState?: string) {
 }
 export function handle(state: string, event: string): (target, key: string) => void {
   return function(target, key: string) {
-    setEventHandler(state, event, target, target[key]);
+    setEventHandler(state, event, target, function(...args) {
+      return this[key].apply(this, args);
+    });
   };
 }
 export function entry(state: string): (target, key: string) => void {
