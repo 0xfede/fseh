@@ -11,7 +11,7 @@ describe('Errors', function() {
     it('should not fail when Error.captureStackTrace is not available', function() {
       const save = Error.captureStackTrace;
       try {
-        delete Error.captureStackTrace;
+        delete (Error as any).captureStackTrace;
         new InvalidEventError('test');
         new InvalidEventError('test', 'test', true);
       } finally {
@@ -23,7 +23,7 @@ describe('Errors', function() {
     it('should not fail when Error.captureStackTrace is not available', function() {
       const save = Error.captureStackTrace;
       try {
-        delete Error.captureStackTrace;
+        delete (Error as any).captureStackTrace;
         new UnhandledEventError('test');
       } finally {
         Error.captureStackTrace = save;
@@ -34,7 +34,7 @@ describe('Errors', function() {
     it('should not fail when Error.captureStackTrace is not available', function() {
       const save = Error.captureStackTrace;
       try {
-        delete Error.captureStackTrace;
+        delete (Error as any).captureStackTrace;
         new InvalidStateError('test');
       } finally {
         Error.captureStackTrace = save;
@@ -45,7 +45,7 @@ describe('Errors', function() {
     it('should not fail when Error.captureStackTrace is not available', function() {
       const save = Error.captureStackTrace;
       try {
-        delete Error.captureStackTrace;
+        delete (Error as any).captureStackTrace;
         new UnknownStateError('test');
       } finally {
         Error.captureStackTrace = save;
