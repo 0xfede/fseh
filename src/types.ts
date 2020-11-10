@@ -6,7 +6,7 @@ export interface Handlers {
   ['exit']?: EventHandler;
   ['entry']?: EventHandler;
   ['*']?: EventHandler | 'defer' | 'noop';
-  [name: string]: EventHandler | 'defer' | 'noop' | undefined;
+  [name: string]: EventHandler | 'defer' | 'noop' | string | undefined;
 }
 
 export type StateTable = { [name: string]: Handlers };

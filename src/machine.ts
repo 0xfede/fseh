@@ -44,19 +44,19 @@ export class Machine extends EventEmitter {
       if (this.state && this.states[this.state]) {
         let tmp = this.states[this.state][name] || this.states[this.state]['*'];
         if (tmp) {
-          switch (tmp) {
-            case 'defer':
-              this.logger.debug(`DEFERRING ${deferred ? 'deferred ' : ''}event ${name.toUpperCase()} in state ${this.state.toUpperCase()}`);
-              handler = this.defer(name);
-              break;
-            case 'noop':
-              this.logger.debug(`IGNORING ${deferred ? 'deferred ' : ''}event ${name.toUpperCase()} in state ${this.state.toUpperCase()}`);
-              handler = () => {};
-              break;
-            default:
-              this.logger.debug(`PROCESSING ${deferred ? 'deferred ' : ''}event ${name.toUpperCase()} in state ${this.state.toUpperCase()}`);
+          if (tmp === 'defer') {
+            this.logger.debug(`DEFERRING ${deferred ? 'deferred ' : ''}event ${name.toUpperCase()} in state ${this.state.toUpperCase()}`);
+            handler = this.defer(name);
+          } else if (tmp === 'noop') {
+            this.logger.debug(`IGNORING ${deferred ? 'deferred ' : ''}event ${name.toUpperCase()} in state ${this.state.toUpperCase()}`);
+            handler = () => {};
+          } else {
+            this.logger.debug(`PROCESSING ${deferred ? 'deferred ' : ''}event ${name.toUpperCase()} in state ${this.state.toUpperCase()}`);
+            if (typeof tmp === 'string') {
+              handler = (...args: any[]) => this.enter(tmp as string, ...args);
+            } else {
               handler = tmp as EventHandler;
-              break;
+            }
           }
         }
       }

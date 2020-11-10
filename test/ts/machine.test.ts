@@ -539,6 +539,32 @@ describe('Machine', function() {
     });
   });
 
+  describe('string handler', function() {
+    it('should perform a valid transition', async function() {
+      let m = new Machine(
+        {
+          start: {
+            event: 'end'
+          },
+          end: {}
+        },
+        'start'
+      );
+      await m.ready;
+      should.exist(m.state);
+      if (m.state) {
+        m.state.should.be.a('string');
+        m.state.should.equal('start');
+      }
+      await m.process('event');
+      should.exist(m.state);
+      if (m.state) {
+        m.state.should.be.a('string');
+        m.state.should.equal('end');
+      }
+    });
+  });
+
   describe('eventHandler', function() {
     it('should create a default event handler', async function() {
       let m = new Machine(
