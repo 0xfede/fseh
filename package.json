@@ -1,26 +1,25 @@
 {
   "name": "fseh",
-  "version": "0.0.0-development",
+  "version": "5.0.0",
   "description": "A minimal Finite State Event Handler for JavaScript",
-  "main": "dist/index.js",
-  "typings": "dist/index.d.ts",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
   "scripts": {
     "build": "tsc",
-    "build:all": "npm i && npm run build && npm i --package-lock",
-    "build:tests": "tsc -p test",
-    "clean": "rimraf dist coverage .nyc_output test-results",
-    "clean:all": "npm run clean && rimraf node_modules",
-    "cover": "nyc --reporter=lcov --reporter=text npm t",
-    "report-coverage": "cat ./coverage/lcov.info | coveralls",
-    "prebuild": "rimraf dist",
-    "commit": "git-cz",
-    "check-coverage": "nyc check-coverage --statements 100 --branches 99 --functions 100 --lines 100",
-    "watch:test": "npm t -- -w",
-    "test": "find ./test/ts -type f -name '*.js' -delete && npm run build && tsc -p test && mocha --exit --no-timeouts --recursive --reporter mochawesome --reporter-options reportDir=test-results test/**/*.test.js",
-    "test:debug": "find ./test/ts -type f -name '*.js' -delete && npm run build && npm run build:tests && mocha --exit --no-timeouts --inspect-brk --recursive test/**/*.test.js",
-    "test:watch": "nodemon -e ts --ignore dist/ --ignore 'test/ts/*.js' --exec npm run test",
-    "semantic-release": "semantic-release",
-    "semantic-release-dry": "semantic-release --dry-run"
+    "clean": "rm -rf dist coverage test-results",
+    "clean:all": "npm run clean && rm -rf node_modules",
+    "prebuild": "rm -rf dist",
+    "cover": "c8 --reporter=lcov --reporter=text npm t",
+    "check-coverage": "c8 check-coverage --statements 100 --branches 99 --functions 100 --lines 100",
+    "test": "npm run build && tsc -p test && mocha --exit --no-timeouts --recursive test/**/*.test.js",
+    "semantic-release": "semantic-release"
   },
   "repository": {
     "type": "git",
@@ -39,6 +38,7 @@
   "files": [
     "dist/**/*.js",
     "dist/**/*.ts",
+    "dist/**/*.js.map",
     "README.md",
     "LICENSE"
   ],
@@ -49,59 +49,21 @@
   },
   "homepage": "https://github.com/0xfede/fseh#readme",
   "devDependencies": {
-    "@commitlint/cli": "^11.0.0",
-    "@commitlint/config-conventional": "^11.0.0",
-    "@types/chai": "^4.2.14",
-    "@types/chai-as-promised": "^7.1.3",
-    "@types/chai-spies": "^1.0.2",
-    "@types/mocha": "^8.0.3",
-    "chai": "^4.2.0",
+    "@types/chai": "^4.3.0",
+    "@types/chai-as-promised": "^7.1.8",
+    "@types/chai-spies": "^1.0.6",
+    "@types/mocha": "^10.0.0",
+    "@types/node": "^22.19.13",
+    "c8": "^10.0.0",
+    "chai": "^4.4.0",
     "chai-as-promised": "^7.1.1",
-    "chai-spies": "^1.0.0",
-    "commitizen": "^4.2.2",
-    "commitlint": "^11.0.0",
-    "coveralls": "^3.1.0",
-    "cz-conventional-changelog": "^3.3.0",
-    "husky": "^4.3.0",
-    "mocha": "^8.2.1",
-    "mochawesome": "^6.2.1",
-    "nyc": "^15.1.0",
-    "rimraf": "^3.0.2",
-    "semantic-release": "^17.2.2",
-    "supertest": "^6.0.1",
-    "typescript": "^4.0.5"
-  },
-  "config": {
-    "commitizen": {
-      "path": "./node_modules/cz-conventional-changelog"
-    }
-  },
-  "husky": {
-    "hooks": {
-      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS",
-      "pre-commit": "npm run build && npm run cover && npm run check-coverage"
-    }
-  },
-  "nyc": {
-    "include": [
-      "dist/**/*.js",
-      "src/**/*.ts"
-    ],
-    "extension": [
-      ".js",
-      ".ts"
-    ],
-    "exclude": [
-      "**/test"
-    ],
-    "reporter": [
-      "lcov",
-      "text"
-    ],
-    "sourceMap": true
+    "chai-spies": "^1.1.0",
+    "mocha": "^10.7.0",
+    "mochawesome": "^7.1.3",
+    "typescript": "^5.7.0"
   },
   "dependencies": {
-    "debuggo": "^1.3.1",
+    "debuggo": "^2.0.0",
     "eredita": "^1.2.0"
   }
 }

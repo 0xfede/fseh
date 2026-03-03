@@ -1,7 +1,7 @@
-import * as chai from 'chai';
-import * as chaiAsPromised from 'chai-as-promised';
-import * as spies from 'chai-spies';
-import { InvalidEventError, InvalidStateError, UnhandledEventError, UnknownStateError } from '../../dist/errors';
+import chai from 'chai';
+import chaiAsPromised from 'chai-as-promised';
+import spies from 'chai-spies';
+import { InvalidEventError, InvalidStateError, UnhandledEventError, UnknownStateError } from '../../dist/errors.js';
 
 chai.use(spies);
 chai.use(chaiAsPromised);

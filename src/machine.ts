@@ -1,7 +1,7 @@
 import { getLogger, Logger } from 'debuggo';
 import { EventEmitter } from 'events';
-import { InvalidEventError, InvalidStateError, UnhandledEventError, UnknownStateError } from './errors';
-import { EventHandler, Handlers, StateTable } from './types';
+import { InvalidEventError, InvalidStateError, UnhandledEventError, UnknownStateError } from './errors.js';
+import { EventHandler, Handlers, StateTable } from './types.js';
 
 export class Machine extends EventEmitter {
   state?: string;
@@ -101,8 +101,8 @@ export class Machine extends EventEmitter {
         }
         this.emit(`${state}:pre-entry`, ...args);
         this.emit('pre-entry', state, ...args);
-        let unlockReady;
-        this.ready = new Promise(resolve => {
+        let unlockReady: (() => void) | undefined;
+        this.ready = new Promise<void>(resolve => {
           unlockReady = resolve;
         });
         this.state = state;

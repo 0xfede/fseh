@@ -1,15 +1,15 @@
 import { deepExtend } from 'eredita';
-import { EventHandler, StateTable } from './types';
+import { EventHandler, StateTable } from './types.js';
 
 const classStateTable = Symbol();
 
-function getClassStateTable(target): StateTable {
+function getClassStateTable(target: any): StateTable {
   if (!target[classStateTable]) {
     target[classStateTable] = {};
   }
   return target[classStateTable];
 }
-function setEventHandler(state: string, event: string, target, handler: EventHandler | 'defer' | 'noop') {
+function setEventHandler(state: string, event: string, target: any, handler: EventHandler | 'defer' | 'noop') {
   const table = getClassStateTable(target.constructor);
   if (!table[state]) {
     table[state] = {};
@@ -30,26 +30,26 @@ export function fsm(initialState?: string) {
     };
   };
 }
-export function handle(state: string, event: string): (target, key: string) => void {
-  return function(target, key: string) {
-    setEventHandler(state, event, target, function(...args) {
+export function handle(state: string, event: string): (target: any, key: string) => void {
+  return function(target: any, key: string) {
+    setEventHandler(state, event, target, function(this: any, ...args: any[]) {
       return this[key].apply(this, args);
     });
   };
 }
-export function entry(state: string): (target, key: string) => void {
+export function entry(state: string): (target: any, key: string) => void {
   return handle(state, 'entry');
 }
-export function exit(state: string): (target, key: string) => void {
+export function exit(state: string): (target: any, key: string) => void {
   return handle(state, 'exit');
 }
-export function defer(state: string, event: string): (target, key: string) => void {
-  return function(target) {
+export function defer(state: string, event: string): (target: any, key: string) => void {
+  return function(target: any) {
     setEventHandler(state, event, target, 'defer');
   };
 }
-export function noop(state: string, event: string): (target, key: string) => void {
-  return function(target) {
+export function noop(state: string, event: string): (target: any, key: string) => void {
+  return function(target: any) {
     setEventHandler(state, event, target, 'noop');
   };
 }

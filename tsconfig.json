@@ -1,13 +1,15 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
-    "target": "es2017",
-    "noImplicitAny": false,
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "target": "ES2022",
     "sourceMap": true,
     "declaration": true,
+    "declarationMap": true,
     "outDir": "dist",
-    "strictNullChecks": true,
-    "allowJs": false,
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
     "experimentalDecorators": true
   },
   "include": ["src/**/*.ts"]

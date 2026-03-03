@@ -1,7 +1,7 @@
-import * as chai from 'chai';
-import * as chaiAsPromised from 'chai-as-promised';
-import * as spies from 'chai-spies';
-import { defer, entry, exit, fsm, handle, Machine, noop } from '../../dist';
+import chai from 'chai';
+import chaiAsPromised from 'chai-as-promised';
+import spies from 'chai-spies';
+import { defer, entry, exit, fsm, handle, Machine, noop } from '../../dist/index.js';
 
 const should = chai.should();
 chai.use(spies);

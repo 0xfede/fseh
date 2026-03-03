@@ -1,11 +1,13 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
-    "target": "es2017",
-    "noImplicitAny": false,
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "target": "ES2022",
     "sourceMap": false,
     "declaration": false,
-    "strictNullChecks": true,
+    "strict": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
     "experimentalDecorators": true
   },
   "include": ["./**/*"]
