@@ -1,6 +1,6 @@
 {
   "name": "fseh",
-  "version": "5.0.0",
+  "version": "5.0.1",
   "description": "A minimal Finite State Event Handler for JavaScript",
   "type": "module",
   "main": "./dist/index.js",
@@ -63,7 +63,7 @@
     "typescript": "^5.7.0"
   },
   "dependencies": {
-    "debuggo": "^2.0.0",
+    "debuggo": "^2.0.1",
     "eredita": "^1.2.0"
   }
 }
